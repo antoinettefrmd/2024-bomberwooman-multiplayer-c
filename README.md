@@ -1,4 +1,4 @@
 ## CONTRIBUTORS
-+ Lisa Barragues
-+ Antoinette Fourmond 
-+ Ronen Shay
++ **Lisa Barragues**
++ **Antoinette Fourmond**
++ **Ronen Shay**
