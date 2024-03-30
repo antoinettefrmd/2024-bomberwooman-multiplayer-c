@@ -27,10 +27,7 @@ MAGENTA		=	\033[0;95m
 CYAN		=	\033[0;96m
 WHITE		=	\033[0;97m
 
-SRC_FILES	=	minishell prompt prompt_utils exec exec_utils error env lexer lexer_utils lexer_types lexer_types2 lexer_env lexer_envbis builtins utils2 \
-				 linked_list nodes nodes_free redirections heredoc_v2 heredoc_v2bis builtins_utils env_shlvl signal pipes pipe_utils exec_utils2 builtins2 \
-				 lexer_types3 is_dir builtin_utils2 builtins3
-
+SRC_FILES	=
 
 
 SRC			=	$(addprefix $(SRC_DIR), $(addsuffix .c, $(SRC_FILES)))
@@ -69,16 +66,6 @@ fclean:		clean
 			@echo "$(CYAN)$(NAME) executable files cleaned!$(DEF_COLOR)"
 
 re:			fclean all
-
-norm:
-			@norminette $(SRC) $(INCLUDE) | grep -v Norme | awk '{\
-			if ($$NF == "OK!") { \
-				print "$(GREEN)"$$0"$(END)" \
-			} else if ($$NF == "Error!") { \
-				print "$(RED)$(BOLD)"$$0"$(END)" \
-			} else if ($$1 == "Error:") { \
-				print "$(LIGHT_RED)"$$0"$(END)" \
-			} else { print }}'
 
 .PHONY:		all clean fclean re norm bonus
 
