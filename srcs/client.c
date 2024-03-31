@@ -34,24 +34,18 @@ int client (const char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    // char buf[SIZE_MESS];
-    // memset(buf, 0, SIZE_MESS);
-    
-    // char buf2[SIZE_MESS];
-    // memset(buf2, 0, SIZE_MESS);
-    
-    u_int16_t req[16];
+   
+    u_int16_t req[1];
+    memset(&req, 0, sizeof(req));
     req[0] = htons(atoi(argv[1]));
-    req[1] = 0; 
-    req[1]<<= 12;
-    // req[2] = 0;
+    printf("%d\n",req[0]);
     
     int paquets_envoyes = 0; 
     int res_send;
     // Envoi du message
-    while ((size_t)paquets_envoyes < 16) 
+    while ((size_t)paquets_envoyes < sizeof(req)) 
     {
-        res_send = send(sock, req + paquets_envoyes, 16, 0);
+        res_send = send(sock, req + paquets_envoyes, sizeof(req), 0);
         if (res_send == -1) 
         {
             perror("Erreur lors de l'envoi du message");

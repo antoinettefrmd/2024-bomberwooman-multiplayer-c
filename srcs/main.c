@@ -7,7 +7,7 @@ int main(int argc, const char *argv[]) {
     int messageRecu;
     // char buffer[BUFFER_SIZE];
     int res_recv;
-    u_int16_t req[16];
+    u_int16_t req[1];
     if(argc != 2) 
     {
         perror("Commence par rentrer less bons arguments");
@@ -56,7 +56,7 @@ int main(int argc, const char *argv[]) {
 
         while ((size_t)res_recv < sizeof(req))
         {
-            messageRecu = recv(sockclient, req + messageRecu, 16, 0);
+            messageRecu = recv(sockclient, req, 1, 0);
             if (messageRecu == -1) 
             {
                 perror("Erreur lors de l'envoi du message");
@@ -74,8 +74,8 @@ int main(int argc, const char *argv[]) {
             exit(EXIT_FAILURE);
         }
         close(sockclient);
-        for(int i = 0 ; i < 16 ; i++) {
-            printf("%d\n",req[i]);
+        for(int i = 0 ; i < 1 ; i++) {
+            printf("%hx\n",req[i]);
         }
         
     }
