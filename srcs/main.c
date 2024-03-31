@@ -3,19 +3,30 @@
 // #define BUFFER_SIZE 1024
 
 int main(int argc, const char *argv[]) {
-
+    
+    int portUDP = 1111;
+    int portMDIFF = 4321;
+   
     int messageRecu;
-    int res_recv;
-    u_int16_t req[1];
-    liste_parties_t *partie_2v2;
-    liste_parties_t *partie_4_adv;
+    int res_recv = 0;
 
-    memset(&partie_2v2, 0, sizeof(liste_parties_t));
-    memset(&partie_4_adv, 0, sizeof(liste_parties_t));
+    u_int16_t req[1];
+    memset(&req, 0, sizeof(req));
+
+    liste_parties_t *partie_2v2 = malloc(sizeof(liste_parties_t));
+    liste_parties_t *partie_4_adv = malloc(sizeof(liste_parties_t));
+    
+    if (partie_2v2 == NULL || partie_4_adv == NULL) {
+        perror("malloc failed");
+        exit(1);
+    }
+
+    memset(partie_2v2, 0, sizeof(liste_parties_t));
+    memset(partie_4_adv, 0, sizeof(liste_parties_t));
 
     if(argc != 2) 
     {
-        perror("Commence par rentrer less bons arguments");
+        perror("Commence par rentrer les bons arguments");
         exit(1);
     }
 
@@ -81,16 +92,42 @@ int main(int argc, const char *argv[]) {
 
         partie_t p;
         p.joueurs[0] = j;
+       
+        u_int16_t rep[4];
+        memset(&rep, 0, sizeof(u_int16_t)*4);
+
 
         if (req[0] == 2) 
         {
             partie_2v2->partie = p;
+            rep[0] = htons(10);
+            if (p.nb_joueurs_courant < 2){
+                rep[0] |= 0;
+            } else {
+                rep[0] |= 1;
+            }     
         }
         else 
         {
             partie_4_adv->partie = p;
+            rep[0] = htons(9);
         }
+
+        u_int16_t id = j.id;
+        rep[0] |= id << 1; 
+        rep[1] = htons(portUDP);
+        rep[2] = htons(portMDIFF);
         
+        struct sockaddr_in6 adresseMultiDiff;
+        memset(&adresseMultiDiff, 0, sizeof(adresseMultiDiff));
+        adresseMultiDiff.sin6_family = AF_INET6;
+        inet_pton(AF_INET6,"ff12::1:2:3", &adresseMultiDiff);
+        adresseMultiDiff.sin6_port = htons(portMDIFF);
+        
+     //  int sock = socket(AF_INET6,SOCK_DGRAM,0);
+
+       // rep[3] = adresseMultiDiff; // adresse à laquelle les joueurs s'abonnent
+
         close(sockclient);
         for(int i = 0 ; i < 1 ; i++) {
             printf("%hx\n",req[i]);

@@ -14,7 +14,7 @@
 
 typedef struct joueur {
     int id;
-    int id_equipe;// à voir si on garde le -1 dans le point h
+    int id_equipe; // à voir si on garde le -1 dans le point h
     struct sockaddr_in6 adresse; // adresse du joueur 
 } joueur_t;
 
@@ -33,9 +33,6 @@ typedef struct liste_parties {
     struct partie partie;
     struct liste_parties *suivant;
 } liste_parties_t;
-
-
-
 
 
 int client(const char *argv[]);
