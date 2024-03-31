@@ -10,20 +10,31 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-// ça ne fonctionne pas encore
-// // Struct serv
+// Struct joueur
 
-// struct liste_parties {
-//     struct partie partie;
-//     struct liste_parties *suivant;
-// } liste_parties_t;
+typedef struct joueur {
+    int id;
+    int id_equipe;// à voir si on garde le -1 dans le point h
+    struct sockaddr_in6 adresse; // adresse du joueur 
+} joueur_t;
 
-// // Struct partie
+// Struct partie
 
-// struct partie {
-//     int nb_joueurs_courant;
-//     struct sockaddr_in6 adresse;
-// } partie_t;
+typedef struct partie {
+    int nb_joueurs_courant;
+    joueur_t joueurs[4];
+    struct sockaddr_in6 adresse; // adresse de la partie
+} partie_t;
+
+
+// Struct serv
+
+typedef struct liste_parties {
+    struct partie partie;
+    struct liste_parties *suivant;
+} liste_parties_t;
+
+
 
 
 

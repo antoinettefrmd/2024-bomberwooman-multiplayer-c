@@ -5,9 +5,14 @@
 int main(int argc, const char *argv[]) {
 
     int messageRecu;
-    // char buffer[BUFFER_SIZE];
     int res_recv;
     u_int16_t req[1];
+    liste_parties_t *partie_2v2;
+    liste_parties_t *partie_4_adv;
+
+    memset(&partie_2v2, 0, sizeof(liste_parties_t));
+    memset(&partie_4_adv, 0, sizeof(liste_parties_t));
+
     if(argc != 2) 
     {
         perror("Commence par rentrer less bons arguments");
@@ -51,9 +56,9 @@ int main(int argc, const char *argv[]) {
             char addr_buf[INET6_ADDRSTRLEN];
             inet_ntop(AF_INET6, &(adrclient.sin_addr), addr_buf, sizeof(addr_buf));
         }
-
         printf("[*] Connexion établie avec %s:%d\n", inet_ntoa(adrclient.sin_addr), ntohs(adrclient.sin_port));
-
+        joueur_t j;
+        j.id = 1;
         while ((size_t)res_recv < sizeof(req))
         {
             messageRecu = recv(sockclient, req, 1, 0);
@@ -73,11 +78,23 @@ int main(int argc, const char *argv[]) {
             perror("Erreur lors de la réception");
             exit(EXIT_FAILURE);
         }
+
+        partie_t p;
+        p.joueurs[0] = j;
+
+        if (req[0] == 2) 
+        {
+            partie_2v2->partie = p;
+        }
+        else 
+        {
+            partie_4_adv->partie = p;
+        }
+        
         close(sockclient);
         for(int i = 0 ; i < 1 ; i++) {
             printf("%hx\n",req[i]);
-        }
-        
+        } 
     }
     
     close(sock);
