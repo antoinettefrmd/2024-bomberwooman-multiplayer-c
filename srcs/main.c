@@ -2,7 +2,7 @@
 
 // #define BUFFER_SIZE 1024
 
-int main(int argc, const char *argv[]) {
+int main() {
     
     int portUDP = 1111;
     int portMDIFF = 4321;
@@ -24,11 +24,6 @@ int main(int argc, const char *argv[]) {
     memset(partie_2v2, 0, sizeof(liste_parties_t));
     memset(partie_4_adv, 0, sizeof(liste_parties_t));
 
-    if(argc != 2) 
-    {
-        perror("Commence par rentrer les bons arguments");
-        exit(1);
-    }
 
     /* creation de la socket serveur */
     int sock = socket(PF_INET6, SOCK_STREAM, 0);
@@ -50,15 +45,13 @@ int main(int argc, const char *argv[]) {
     int r2 = listen(sock, 0);
     if (r2 == -1) 
     {
-        perror("bon bah là c'est pas de t faute (je crois)");
+        perror("bon bah là c'est pas de ta faute (je crois)");
         exit(-1);
     }
 
     /* on récupère l'adresse du client */
     struct sockaddr_in adrclient;
     socklen_t size = sizeof(adrclient);  
-
-    client(argv);
 
     while(1) {
         /* pour accepter la demande de connexion d'un client */
@@ -70,6 +63,7 @@ int main(int argc, const char *argv[]) {
         printf("[*] Connexion établie avec %s:%d\n", inet_ntoa(adrclient.sin_addr), ntohs(adrclient.sin_port));
         joueur_t j;
         j.id = 1;
+
         while ((size_t)res_recv < sizeof(req))
         {
             messageRecu = recv(sockclient, req, 1, 0);
@@ -124,14 +118,14 @@ int main(int argc, const char *argv[]) {
         inet_pton(AF_INET6,"ff12::1:2:3", &adresseMultiDiff);
         adresseMultiDiff.sin6_port = htons(portMDIFF);
         
-     //  int sock = socket(AF_INET6,SOCK_DGRAM,0);
+        // int sock = socket(AF_INET6,SOCK_DGRAM,0);
 
-       // rep[3] = adresseMultiDiff; // adresse à laquelle les joueurs s'abonnent
+        rep[3] = (u_int16_t)adresseMultiDiff.sin6_addr.s6_addr; // adresse à laquelle les joueurs s'abonnent
+
+        /* TODO:  envoyer les données au client (rep) */
 
         close(sockclient);
-        for(int i = 0 ; i < 1 ; i++) {
-            printf("%hx\n",req[i]);
-        } 
+    
     }
     
     close(sock);

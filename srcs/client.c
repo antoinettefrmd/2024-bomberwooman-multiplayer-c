@@ -6,9 +6,14 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-// #define SIZE_MESS 100
+#define SIZE_MESS 1024
 
-int client (const char *argv[]) {
+int main (int argc, const char *argv[]) {
+
+    if(argc != 2) {
+        perror("Commence par rentrer les bons arguments");
+        exit(1);
+    }
 
     int sock = socket(PF_INET6,SOCK_STREAM,0);
     if (sock < 0){
@@ -33,7 +38,6 @@ int client (const char *argv[]) {
         perror("connection failed");
         exit(EXIT_FAILURE);
     }
-
    
     u_int16_t req[1];
     memset(&req, 0, sizeof(req));
@@ -42,28 +46,29 @@ int client (const char *argv[]) {
     
     int paquets_envoyes = 0; 
     int res_send;
+   
     // Envoi du message
     while ((size_t)paquets_envoyes < sizeof(req)) 
     {
         res_send = send(sock, req + paquets_envoyes, sizeof(req), 0);
-        if (res_send == -1) 
-        {
+        if (res_send == -1) {
             perror("Erreur lors de l'envoi du message");
             exit(EXIT_FAILURE);
         }
         if (res_send == 0) break;
         paquets_envoyes += res_send;  
     }
+
+   char buf2[SIZE_MESS];
          
-    // // Attente de la réponse
-    // if (recv(sock, buf2, SIZE_MESS, 0) > 0) {
-    //     printf("Réponse du service : %s\n", buf2);
-    // } else {
-    //     perror("Réception de la réponse échouée");
-    //     exit(EXIT_FAILURE);
-    // }
+    /* Attente de la réponse  */
+    if (recv(sock, buf2, SIZE_MESS, 0) > 0) {
+        printf("Réponse du service : %s\n", buf2);
+    } else {
+        perror("Réception de la réponse échouée");
+        exit(EXIT_FAILURE);
+    }
+    
     close(sock);
-
-
     return 0;
 }
