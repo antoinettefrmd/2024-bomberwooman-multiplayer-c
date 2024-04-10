@@ -38,7 +38,7 @@ int client (const char *argv[]) {
     u_int16_t req[1];
     memset(&req, 0, sizeof(req));
     req[0] = htons(atoi(argv[1]));
-    printf("%d\n",req[0]);
+    //printf("%d\n",req[0]);
     
     int paquets_envoyes = 0; 
     int res_send;

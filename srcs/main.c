@@ -5,13 +5,14 @@
 int main(int argc, const char *argv[]) {
 
     int messageRecu;
-    int res_recv;
+    int res_recv = 0;
     u_int16_t req[1];
-    liste_parties_t *partie_2v2;
-    liste_parties_t *partie_4_adv;
+    memset(&req, 0, sizeof(u_int16_t));
+    liste_parties_t *partie_2v2 = malloc(sizeof(liste_parties_t));
+    liste_parties_t *partie_4_adv = malloc(sizeof(liste_parties_t));
 
-    memset(&partie_2v2, 0, sizeof(liste_parties_t));
-    memset(&partie_4_adv, 0, sizeof(liste_parties_t));
+    memset(partie_2v2, 0, sizeof(liste_parties_t));
+    memset(partie_4_adv, 0, sizeof(liste_parties_t));
 
     if(argc != 2) 
     {
@@ -81,20 +82,30 @@ int main(int argc, const char *argv[]) {
 
         partie_t p;
         p.joueurs[0] = j;
+        p.nb_joueurs_courant = 1;
+        u_int16_t rep_0 = 0;
 
+        u_int16_t rep[4];
+        memset(&rep, 0, sizeof(u_int16_t)*4);
         if (req[0] == 2) 
         {
             partie_2v2->partie = p;
+            rep_0 = (u_int16_t)(10 & 0x1FFF);
         }
         else 
         {
             partie_4_adv->partie = p;
+            rep_0 = (u_int16_t)(9 & 0x1FFF);
         }
-        
+        u_int16_t id = (p.nb_joueurs_courant - 1) << 1;
+        rep_0 |= (u_int16_t)((id & 0x3) << 13);
+        rep_0 |= (u_int16_t)((1 & 0x1) << 15);
+        rep[0] = htons(rep_0);
+        //printf("%hx\n", rep[0]);
+
+
         close(sockclient);
-        for(int i = 0 ; i < 1 ; i++) {
-            printf("%hx\n",req[i]);
-        } 
+        printf("%hx\n",req[0]);
     }
     
     close(sock);
