@@ -2,23 +2,28 @@
 
 // #define BUFFER_SIZE 1024
 
-int main(int argc, const char *argv[]) {
-
+int main() {
+    
+    int portUDP = 1111;
+    int portMDIFF = 4321;
+   
     int messageRecu;
     int res_recv = 0;
+
     u_int16_t req[1];
-    memset(&req, 0, sizeof(u_int16_t));
+    memset(&req, 0, sizeof(req));
+
     liste_parties_t *partie_2v2 = malloc(sizeof(liste_parties_t));
     liste_parties_t *partie_4_adv = malloc(sizeof(liste_parties_t));
+    
+    if (partie_2v2 == NULL || partie_4_adv == NULL) {
+        perror("malloc failed");
+        exit(1);
+    }
 
     memset(partie_2v2, 0, sizeof(liste_parties_t));
     memset(partie_4_adv, 0, sizeof(liste_parties_t));
 
-    if(argc != 2) 
-    {
-        perror("Commence par rentrer less bons arguments");
-        exit(1);
-    }
 
     /* creation de la socket serveur */
     int sock = socket(PF_INET6, SOCK_STREAM, 0);
@@ -40,15 +45,13 @@ int main(int argc, const char *argv[]) {
     int r2 = listen(sock, 0);
     if (r2 == -1) 
     {
-        perror("bon bah là c'est pas de t faute (je crois)");
+        perror("bon bah là c'est pas de ta faute (je crois)");
         exit(-1);
     }
 
     /* on récupère l'adresse du client */
     struct sockaddr_in adrclient;
     socklen_t size = sizeof(adrclient);  
-
-    client(argv);
 
     while(1) {
         /* pour accepter la demande de connexion d'un client */
@@ -60,6 +63,7 @@ int main(int argc, const char *argv[]) {
         printf("[*] Connexion établie avec %s:%d\n", inet_ntoa(adrclient.sin_addr), ntohs(adrclient.sin_port));
         joueur_t j;
         j.id = 1;
+
         while ((size_t)res_recv < sizeof(req))
         {
             messageRecu = recv(sockclient, req, 1, 0);
@@ -106,6 +110,27 @@ int main(int argc, const char *argv[]) {
 
         close(sockclient);
         printf("%hx\n",req[0]);
+            rep[0] = htons(9);
+        }
+
+        u_int16_t id = j.id;
+        rep[1] = htons(portUDP);
+        rep[2] = htons(portMDIFF);
+        
+        struct sockaddr_in6 adresseMultiDiff;
+        memset(&adresseMultiDiff, 0, sizeof(adresseMultiDiff));
+        adresseMultiDiff.sin6_family = AF_INET6;
+        inet_pton(AF_INET6,"ff12::1:2:3", &adresseMultiDiff);
+        adresseMultiDiff.sin6_port = htons(portMDIFF);
+        
+        // int sock = socket(AF_INET6,SOCK_DGRAM,0);
+
+        rep[3] = (u_int16_t)adresseMultiDiff.sin6_addr.s6_addr; // adresse à laquelle les joueurs s'abonnent
+
+        /* TODO:  envoyer les données au client (rep) */
+
+        close(sockclient);
+    
     }
     
     close(sock);
