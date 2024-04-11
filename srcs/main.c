@@ -99,7 +99,7 @@ int main() {
         else 
         {
             partie_4_adv->partie = p;
-            rep_0 = (u_int16_t)(9 & 0x1FFF);
+            rep_0 |= (u_int16_t)(9 & 0x1FFF);
         }
         u_int16_t id = (p.nb_joueurs_courant - 1) << 1;
         rep_0 |= (u_int16_t)((id & 0x3) << 13);
@@ -111,7 +111,6 @@ int main() {
         close(sockclient);
         printf("%hx\n",req[0]);
             rep[0] = htons(9);
-        }
 
         u_int16_t id = j.id;
         rep[1] = htons(portUDP);
