@@ -86,29 +86,33 @@ int main() {
 
         partie_t p;
         p.joueurs[0] = j;
-       
+        p.nb_joueurs_courant = 1;
+        u_int16_t rep_0 = 0;
+
         u_int16_t rep[4];
         memset(&rep, 0, sizeof(u_int16_t)*4);
-
-
         if (req[0] == 2) 
         {
             partie_2v2->partie = p;
-            rep[0] = htons(10);
-            if (p.nb_joueurs_courant < 2){
-                rep[0] |= 0;
-            } else {
-                rep[0] |= 1;
-            }     
+            rep_0 = (u_int16_t)(10 & 0x1FFF);
         }
         else 
         {
             partie_4_adv->partie = p;
-            rep[0] = htons(9);
+            rep_0 |= (u_int16_t)(9 & 0x1FFF);
         }
+        u_int16_t id = (p.nb_joueurs_courant - 1) << 1;
+        rep_0 |= (u_int16_t)((id & 0x3) << 13);
+        rep_0 |= (u_int16_t)((1 & 0x1) << 15);
+        rep[0] = htons(rep_0);
+        //printf("%hx\n", rep[0]);
+
+
+        close(sockclient);
+        printf("%hx\n",req[0]);
+            rep[0] = htons(9);
 
         u_int16_t id = j.id;
-        rep[0] |= id << 1; 
         rep[1] = htons(portUDP);
         rep[2] = htons(portMDIFF);
         
