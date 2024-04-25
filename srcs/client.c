@@ -15,6 +15,9 @@ int main (int argc, const char *argv[]) {
         exit(1);
     }
 
+    int octets_recu = 0;
+    ssize_t recu = 0;
+
     int sock = socket(PF_INET6,SOCK_STREAM,0);
     if (sock < 0){
         perror("socket failure");
@@ -59,15 +62,19 @@ int main (int argc, const char *argv[]) {
         paquets_envoyes += res_send;  
     }
 
-   char buf2[SIZE_MESS];
+   uint16_t buf2[4];
          
     /* Attente de la réponse  */
-    if (recv(sock, buf2, SIZE_MESS, 0) > 0) {
-        printf("Réponse du service : %s\n", buf2);
-    } else {
-        perror("Réception de la réponse échouée");
-        exit(EXIT_FAILURE);
+    while ((size_t)octets_recu < sizeof(buf2)) {
+        recu = recv(sock, buf2, SIZE_MESS, 0);
+        if (recu == -1) 
+        {
+            perror("Erreur lors de la réception");
+            exit(EXIT_FAILURE);
+        }
+        octets_recu += recu;
     }
+    printf("Réponse du service : %u\n", buf2[0]);
     
     close(sock);
     return 0;

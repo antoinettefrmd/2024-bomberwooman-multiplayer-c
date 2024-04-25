@@ -1,4 +1,4 @@
-#include "bomberwoman.h"
+#include "../includes/bomberwoman.h"
 
 // #define BUFFER_SIZE 1024
 
@@ -62,14 +62,14 @@ int main() {
         }
         printf("[*] Connexion établie avec %s:%d\n", inet_ntoa(adrclient.sin_addr), ntohs(adrclient.sin_port));
         joueur_t j;
-        j.id = 1;
+        j.id = 1; // on doit trouvé un fonctionnement pour qu'il soit unique et qu'au fur et à mesure ils reprennent les nombres les plus bas des joueurs supprimer 
 
         while ((size_t)res_recv < sizeof(req))
         {
             messageRecu = recv(sockclient, req, 1, 0);
             if (messageRecu == -1) 
             {
-                perror("Erreur lors de l'envoi du message");
+                perror("Erreur lors de la reception du message");
                 exit(EXIT_FAILURE);
             }
             if (messageRecu == 0) 
@@ -101,18 +101,13 @@ int main() {
             partie_4_adv->partie = p;
             rep_0 |= (u_int16_t)(9 & 0x1FFF);
         }
+
         u_int16_t id = (p.nb_joueurs_courant - 1) << 1;
         rep_0 |= (u_int16_t)((id & 0x3) << 13);
         rep_0 |= (u_int16_t)((1 & 0x1) << 15);
         rep[0] = htons(rep_0);
-        //printf("%hx\n", rep[0]);
 
-
-        close(sockclient);
-        printf("%hx\n",req[0]);
-            rep[0] = htons(9);
-
-        u_int16_t id = j.id;
+        id = j.id;
         rep[1] = htons(portUDP);
         rep[2] = htons(portMDIFF);
         
@@ -122,14 +117,25 @@ int main() {
         inet_pton(AF_INET6,"ff12::1:2:3", &adresseMultiDiff);
         adresseMultiDiff.sin6_port = htons(portMDIFF);
         
-        // int sock = socket(AF_INET6,SOCK_DGRAM,0);
+        memcpy(&rep[3], adresseMultiDiff.sin6_addr.s6_addr, sizeof(rep[3]));
 
-        rep[3] = (u_int16_t)adresseMultiDiff.sin6_addr.s6_addr; // adresse à laquelle les joueurs s'abonnent
-
-        /* TODO:  envoyer les données au client (rep) */
-
+        int reponse = 0;
+        ssize_t envoi;
+        while((size_t)reponse < sizeof(rep)) 
+        {
+            envoi = send(sockclient, rep, sizeof(rep), 0);
+            if (envoi == -1) 
+            {
+                perror("Erreur lors de l'envoi du message");
+                exit(EXIT_FAILURE);
+            }
+            if (envoi == 0) 
+            {
+               break;
+            }
+            reponse += envoi;
+        }
         close(sockclient);
-    
     }
     
     close(sock);
