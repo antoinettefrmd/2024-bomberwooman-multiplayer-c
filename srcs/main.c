@@ -8,10 +8,10 @@ int main() {
     int portMDIFF = 4321;
    
     int messageRecu;
-    int res_recv = 0;
+    int res_recv;
 
     u_int16_t req[1];
-    memset(&req, 0, sizeof(req));
+    //memset(&req, 0, sizeof(req));
 
     liste_parties_t *partie_2v2 = malloc(sizeof(liste_parties_t));
     liste_parties_t *partie_4_adv = malloc(sizeof(liste_parties_t));
@@ -52,8 +52,9 @@ int main() {
     /* on récupère l'adresse du client */
     struct sockaddr_in adrclient;
     socklen_t size = sizeof(adrclient);  
-
     while(1) {
+        memset(&req, 0, sizeof(req));
+        res_recv = 0;      
         /* pour accepter la demande de connexion d'un client */
         int sockclient = accept(sock, (struct sockaddr *) &adrclient, &size);
         if(sockclient  >= 0) {
@@ -63,9 +64,10 @@ int main() {
         printf("[*] Connexion établie avec %s:%d\n", inet_ntoa(adrclient.sin_addr), ntohs(adrclient.sin_port));
         joueur_t j;
         j.id = 1; // on doit trouvé un fonctionnement pour qu'il soit unique et qu'au fur et à mesure ils reprennent les nombres les plus bas des joueurs supprimer 
-
+        printf("recpetion de message client\n");
         while ((size_t)res_recv < sizeof(req))
         {
+            printf("boucle de recv\n");
             messageRecu = recv(sockclient, req, 1, 0);
             if (messageRecu == -1) 
             {
@@ -83,7 +85,7 @@ int main() {
             perror("Erreur lors de la réception");
             exit(EXIT_FAILURE);
         }
-
+        printf("req = %u\n", (req[0]));
         partie_t p;
         p.joueurs[0] = j;
         p.nb_joueurs_courant = 1;
@@ -94,7 +96,7 @@ int main() {
         if (req[0] == 2) 
         {
             partie_2v2->partie = p;
-            rep_0 = (u_int16_t)(10 & 0x1FFF);
+            rep_0 |= (u_int16_t)(10 & 0x1FFF);
         }
         else 
         {
@@ -103,8 +105,8 @@ int main() {
         }
 
         u_int16_t id = (p.nb_joueurs_courant - 1) << 1;
-        rep_0 |= (u_int16_t)((id & 0x3) << 13);
-        rep_0 |= (u_int16_t)((1 & 0x1) << 15);
+        //rep_0 |= (u_int16_t)((id & 0x3) << 13);
+        //rep_0 |= (u_int16_t)((1 & 0x1) << 15);
         rep[0] = htons(rep_0);
 
         id = j.id;
@@ -123,7 +125,7 @@ int main() {
         ssize_t envoi;
         while((size_t)reponse < sizeof(rep)) 
         {
-            envoi = send(sockclient, rep, sizeof(rep), 0);
+            envoi = send(sockclient, rep + reponse, sizeof(rep), 0);
             if (envoi == -1) 
             {
                 perror("Erreur lors de l'envoi du message");

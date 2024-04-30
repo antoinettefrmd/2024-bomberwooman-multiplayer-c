@@ -45,7 +45,7 @@ int main (int argc, const char *argv[]) {
     u_int16_t req[1];
     memset(&req, 0, sizeof(req));
     req[0] = htons(atoi(argv[1]));
-    //printf("%d\n",req[0]);
+    printf("client req = %d\n",ntohs(req[0]));
     
     int paquets_envoyes = 0; 
     int res_send;
@@ -53,7 +53,7 @@ int main (int argc, const char *argv[]) {
     // Envoi du message
     while ((size_t)paquets_envoyes < sizeof(req)) 
     {
-        res_send = send(sock, req + paquets_envoyes, sizeof(req), 0);
+        res_send = send(sock, req, sizeof(req), 0);
         if (res_send == -1) {
             perror("Erreur lors de l'envoi du message");
             exit(EXIT_FAILURE);
@@ -66,7 +66,7 @@ int main (int argc, const char *argv[]) {
          
     /* Attente de la réponse  */
     while ((size_t)octets_recu < sizeof(buf2)) {
-        recu = recv(sock, buf2, SIZE_MESS, 0);
+        recu = recv(sock, buf2 + octets_recu, SIZE_MESS, 0);
         if (recu == -1) 
         {
             perror("Erreur lors de la réception");
@@ -74,7 +74,7 @@ int main (int argc, const char *argv[]) {
         }
         octets_recu += recu;
     }
-    printf("Réponse du service : %u\n", buf2[0]);
+    printf("Réponse du service : %u\n", ntohs(buf2[0]));
     
     close(sock);
     return 0;

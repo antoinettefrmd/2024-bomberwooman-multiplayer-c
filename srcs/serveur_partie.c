@@ -46,6 +46,7 @@ int serveur() {
         perror("Erreur lors de la liaison de la socket au port");
         exit(EXIT_FAILURE);
     }
+    
    
     /*
     
