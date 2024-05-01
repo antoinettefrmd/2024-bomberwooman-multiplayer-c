@@ -11,7 +11,7 @@
 int main (int argc, const char *argv[]) {
 
     if(argc != 2) {
-        perror("Commence par rentrer les bons arguments");
+        perror("Erreur : Veuillez rajouter 2 en argument pour un partie 2v2 ou 4 pour pour une partie chacun pour soi.");
         exit(1);
     }
 
@@ -27,7 +27,7 @@ int main (int argc, const char *argv[]) {
     memset(&adresse,0,sizeof(adresse));
    
     adresse.sin6_family = AF_INET6;
-    adresse.sin6_port = htons(1124); /* numéro de port du service echo dans cat /etc/services */
+    adresse.sin6_port = htons(1124);
 
     // Utilisation de l'adresse IPv6 locale ::1
     if (inet_pton(AF_INET6, "::1", &adresse.sin6_addr) <= 0) {
@@ -66,7 +66,7 @@ int main (int argc, const char *argv[]) {
          
     /* Attente de la réponse  */
     while ((size_t)octets_recu < sizeof(buf2)) {
-        recu = recv(sock, buf2, SIZE_MESS, 0);
+        recu = recv(sock, buf2+octets_recu, SIZE_MESS, 0);
         if (recu == -1) 
         {
             perror("Erreur lors de la réception");
@@ -74,7 +74,7 @@ int main (int argc, const char *argv[]) {
         }
         octets_recu += recu;
     }
-    printf("Réponse du service : %u\n", buf2[0]);
+    printf("Réponse du service : %u\n", ntohs(buf2[0]));
     
     close(sock);
     return 0;

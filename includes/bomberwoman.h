@@ -9,32 +9,46 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <pthread.h>
+
+
+#define PORT_TCP 2222
 
 // Struct joueur
 
 typedef struct joueur {
     int id;
-    int id_equipe; // à voir si on garde le -1 dans le point h
-    struct sockaddr_in6 adresse; // adresse du joueur 
+    int id_equipe; 
+    struct sockaddr_in6 adresse; // adresse du client quand il se connecte
 } joueur_t;
 
 // Struct partie
 
 typedef struct partie {
     int nb_joueurs_courant;
-    joueur_t joueurs[4];
-    struct sockaddr_in6 adresse; // adresse de la partie
+    joueur_t *joueurs[4];
+    int port;
 } partie_t;
 
 
 // Struct serv
 
 typedef struct liste_parties {
-    struct partie partie;
+    struct partie *partie;
     struct liste_parties *suivant;
 } liste_parties_t;
 
+// Struct client 
+
+typedef struct arg_thread {
+    int socket_client;
+    // joueur_t *joueur;
+    liste_parties_t *liste_2v2;
+    liste_parties_t *liste_4adv;
+} arg_thread_t;
 
 int client(const char *argv[]);
+
+int client_thread(arg_thread_t *args);
 
 #endif
