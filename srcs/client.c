@@ -76,6 +76,7 @@ int main (int argc, const char *argv[]) {
     }
     printf("Réponse du service : %u\n", ntohs(buf2[0]));
     
+    
     close(sock);
     return 0;
 }

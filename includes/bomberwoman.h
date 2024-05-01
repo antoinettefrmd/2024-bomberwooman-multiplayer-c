@@ -36,5 +36,6 @@ typedef struct liste_parties {
 
 
 int client(const char *argv[]);
+int ncurses();
 
 #endif

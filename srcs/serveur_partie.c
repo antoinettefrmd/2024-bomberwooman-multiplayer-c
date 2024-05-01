@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#include "bomberwoman.h"
 
 #define MULTICAST_GROUP "ff12::1" /* fait partie de la plage d'adresses multicast réservées pour les liaisons de liaison locale */
 #define PORT 12121 /* quel port utiliser ?*/
@@ -46,7 +47,7 @@ int serveur() {
         perror("Erreur lors de la liaison de la socket au port");
         exit(EXIT_FAILURE);
     }
-    
+    ncurses();
    
     /*
     
