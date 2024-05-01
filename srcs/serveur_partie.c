@@ -81,7 +81,7 @@ int client_thread(arg_thread_t *args)
 
     while ((size_t)res_recv < sizeof(req))
     {
-        messageRecu = recv(sock_client, req + res_recv, 1, 0);
+        messageRecu = recv(sock_client, req, 1, 0);
         if (messageRecu == -1) 
         {
             perror("Erreur lors de la reception du message");
@@ -108,11 +108,11 @@ int client_thread(arg_thread_t *args)
 
 
     liste_parties_t *courante;
-    printf("%d\n",req[1]);
+    printf("%d\n",ntohs(req[0]));
     if (req[0] == 2) 
     { 
         rajoute_joueur_partie (p_2v2, 0);
-        rep_0 = (u_int16_t)(10 & 0x1FFF);
+        rep_0 |= (u_int16_t)(10 & 0x1FFF);
         courante = p_2v2;
     }
     else 
