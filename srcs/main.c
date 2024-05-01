@@ -7,8 +7,6 @@ int main() {
     liste_parties_t *parties_2v2;
     liste_parties_t *parties_4_adv;
 
-    
-    // args.joueur = NULL;
     args.socket_client = -1;
 
     parties_2v2 = malloc(sizeof(liste_parties_t));
@@ -52,8 +50,7 @@ int main() {
     /* on récupère l'adresse du client */
     struct sockaddr_in adrclient;
     socklen_t size = sizeof(adrclient);  
-
-    while(1) {
+    while(1) {    
         /* pour accepter la demande de connexion d'un client */
         int sockclient = accept(sock, (struct sockaddr *) &adrclient, &size);
         if(sockclient  >= 0) {

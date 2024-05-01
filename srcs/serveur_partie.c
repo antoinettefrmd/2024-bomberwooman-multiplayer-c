@@ -108,7 +108,7 @@ int client_thread(arg_thread_t *args)
 
 
     liste_parties_t *courante;
-
+    printf("%d\n",req[1]);
     if (req[0] == 2) 
     { 
         rajoute_joueur_partie (p_2v2, 0);
@@ -196,6 +196,7 @@ int serveur() {
         perror("Erreur lors de la liaison de la socket au port");
         exit(EXIT_FAILURE);
     }
+    // ncurses();
 
     close(sock);
     return 0;

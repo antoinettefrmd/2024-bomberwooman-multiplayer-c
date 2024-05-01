@@ -12,7 +12,7 @@
 #include <pthread.h>
 
 
-#define PORT_TCP 2222
+#define PORT_TCP 4444
 
 // Struct joueur
 
@@ -48,6 +48,7 @@ typedef struct arg_thread {
 } arg_thread_t;
 
 int client(const char *argv[]);
+int ncurses();
 
 int client_thread(arg_thread_t *args);
 
