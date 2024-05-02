@@ -5,8 +5,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <math.h>
+#include "bomberwoman.h"
 
 #define SIZE_MESS 1024
+static int n_move = 0;
 
 int main (int argc, const char *argv[]) {
 
@@ -74,6 +77,24 @@ int main (int argc, const char *argv[]) {
         octets_recu += recu;
     }
     printf("Réponse du service : %u\n", ntohs(buf2[0] & 0xFFF));
+    ncurses(buf2);
     close(sock);
     return 0;
+}
+void actions(int a, u_int16_t *buf) {
+    //printf("action = %d et codereq = %u\n",a, ntohs(buf[0] & 0xFF00));
+     u_int16_t move[2];
+    u_int16_t move_1;
+
+    if (ntohs(buf[0] & 0xFF00) == 9)
+        move[0] = header(5, (buf[0] >> 13) & 0x3, (buf[0] >> 15) & 0x1);
+    else
+        move[0] =  header(5, (buf[0] >> 13) & 0x3, 0);        
+
+    move_1 = 0;
+    move_1 |= (u_int16_t)((n_move % (int)pow(2, 13)) & 0x1FFF); // le numéro est également codé sur 12 bits
+    n_move++;
+    move_1 |= (u_int16_t)((a & 0x3) << 13); // action est placé sur le bit 13
+    move[1] = htons(move_1); // les deux octets sont mis au format big endian
+
 }

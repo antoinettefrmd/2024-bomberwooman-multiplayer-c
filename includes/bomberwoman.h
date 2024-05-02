@@ -48,7 +48,10 @@ typedef struct arg_thread {
 } arg_thread_t;
 
 int client(const char *argv[]);
-int ncurses();
+int ncurses(u_int16_t *buf);
+void actions(int a, u_int16_t *buf);
+u_int16_t header(int codereq, int id, int eq);
+//void c_actions(int a);
 
 int client_thread(arg_thread_t *args);
 

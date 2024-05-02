@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include "bomberwoman.h"
 
 #define TEXT_SIZE 255
 
@@ -122,18 +123,18 @@ ACTION control(line* l) {
     return a;
 }
 
-bool perform_action(board* b, pos* p, ACTION a) {
+bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf) {
     int xd = 0;
     int yd = 0;
     switch (a) {
         case LEFT:
-            xd = -1; yd = 0; break;
+            xd = -1; yd = 0; actions(3, buf); break;
         case RIGHT:
-            xd = 1; yd = 0; break;
+            xd = 1; yd = 0; actions(1, buf); break;
         case UP:
-            xd = 0; yd = -1; break;
+            xd = 0; yd = -1; actions(0, buf);  break;
         case DOWN:
-            xd = 0; yd = 1; break;
+            xd = 0; yd = 1; actions(2, buf);  break; 
         case QUIT:
             return true;
         default: break;
@@ -145,7 +146,7 @@ bool perform_action(board* b, pos* p, ACTION a) {
     return false;
 }
 
-int ncurses()
+int ncurses(u_int16_t *buf)
 {
     board* b = malloc(sizeof(board));;
     line* l = malloc(sizeof(line));
@@ -167,7 +168,7 @@ int ncurses()
     setup_board(b);
     while (true) {
         ACTION a = control(l);
-        if (perform_action(b, p, a)) break;
+        if (perform_action(b, p, a, buf)) break;
         refresh_game(b,l);
         usleep(30*1000);
     }
