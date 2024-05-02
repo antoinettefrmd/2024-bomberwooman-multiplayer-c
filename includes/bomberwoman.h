@@ -48,6 +48,7 @@ typedef struct arg_thread {
 } arg_thread_t;
 
 int client(const char *argv[]);
+void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]);
 int ncurses();
 
 int client_thread(arg_thread_t *args);

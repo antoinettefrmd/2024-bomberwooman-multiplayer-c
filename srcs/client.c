@@ -4,14 +4,16 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <net/if.h>
 #include <arpa/inet.h>
+#include "bomberwoman.h"
 
 #define SIZE_MESS 1024
 
 int main (int argc, const char *argv[]) {
 
     if(argc != 2) {
-        perror("Erreur : Veuillez rajouter 2 en argument pour un partie 2v2 ou 4 pour pour une partie chacun pour soi.");
+        perror("Erreur : Veuillez ajouter en argument 2 pour une partie 2v2 ou 4 pour une partie chacun pour soi.");
         exit(1);
     }
 
@@ -61,11 +63,11 @@ int main (int argc, const char *argv[]) {
         paquets_envoyes += res_send;  
     }
 
-   uint16_t buf2[4];
+   u_int16_t reponse_serveur[4];
          
     /* Attente de la réponse  */
-    while ((size_t)octets_recu < sizeof(buf2)) {
-        recu = recv(sock, buf2 + octets_recu, SIZE_MESS, 0);
+    while ((size_t)octets_recu < sizeof(reponse_serveur)) {
+        recu = recv(sock, reponse_serveur + octets_recu, SIZE_MESS, 0);
         if (recu == -1) 
         {
             perror("Erreur lors de la réception");
@@ -73,7 +75,70 @@ int main (int argc, const char *argv[]) {
         }
         octets_recu += recu;
     }
-    printf("Réponse du service : %u\n", ntohs(buf2[0] & 0xFFF));
+
+    u_int16_t codereq = ntohs(reponse_serveur[0]) & 0x1FFF;
+    u_int16_t id = (ntohs(reponse_serveur[0]) >> 13) & 0x3;
+    u_int16_t eq = (ntohs(reponse_serveur[0]) >> 15) & 0x1;
+    u_int16_t portUDP = ntohs(reponse_serveur[1]); /* numéro de port sur lequel le serveur attend les actions en UDP des joueurs */
+    u_int16_t portMDIFF = ntohs(reponse_serveur[2]); /* numéro de port sur lequel le serveur multidiffusera ses messages aux joueurs */
+    printf("codereq: %u\n id: %u\n eq: %u\n portUDP: %u\n portMDIFF: %u\n ", codereq, id, eq, portUDP, portMDIFF); 
+   
+    abonnementMultidiff(portMDIFF,reponse_serveur);
+   
     close(sock);
     return 0;
+}
+
+void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]){
+    
+    /* le client doit s'abonner à l'adresseMultiDiff de multidiffusion */
+    int sockUDP = socket(PF_INET6, SOCK_DGRAM,0);
+    if (sockUDP < 0){ 
+        perror("Socket UDP");
+        exit(EXIT_FAILURE);
+    }
+    
+    struct sockaddr_in6 adresseMultiDiff;
+    memset(&adresseMultiDiff, 0, sizeof(adresseMultiDiff));
+    adresseMultiDiff.sin6_family = AF_INET6;
+    adresseMultiDiff.sin6_addr = in6addr_any;
+    adresseMultiDiff.sin6_port = htons(portMDIFF);
+    memcpy(adresseMultiDiff.sin6_addr.s6_addr,reponse_serveur+3,sizeof(adresseMultiDiff.sin6_addr.s6_addr));
+   
+    char ip_str[INET6_ADDRSTRLEN];
+    if (inet_ntop(AF_INET6, &adresseMultiDiff.sin6_addr, ip_str, INET6_ADDRSTRLEN) == NULL) {
+        perror("inet_ntop");
+        exit(EXIT_FAILURE);
+    }
+    printf("Adresse de multidiffusion : %s\n", ip_str);
+    
+    /* liaison de la socket au port pour permettre la réception des paquets */
+    if(bind(sockUDP, (struct sockaddr*)&adresseMultiDiff, sizeof(adresseMultiDiff))) {
+        perror("bind");
+        close(sockUDP);
+        exit(EXIT_FAILURE);
+    }   
+
+    /* abonnement de l'entité au groupe multicast */
+    struct ipv6_mreq group;
+    inet_pton(AF_INET6, ip_str, &group.ipv6mr_multiaddr.s6_addr);
+    group.ipv6mr_interface = if_nametoindex("eth0");
+    
+    if(setsockopt(sockUDP, IPPROTO_IPV6, IPV6_JOIN_GROUP, &group, sizeof(group)) < 0){
+        perror("setsockopt");
+        close(sockUDP);
+        exit(EXIT_FAILURE);
+    }
+    
+    /* lecture des messages multicast diffusé par le serveur *
+    while (1){    
+        ssize_t paquet_recu = read(sockUDP, buf, MAX_BUF);
+        if (paquet_recu < 0){
+            perror("erreur recvfrom");
+            close(sockUDP);
+            exit(EXIT_FAILURE);
+        }
+
+        printf("Message reçu du serveur: %.*s\n", (int)paquet_recu, buf);
+    }*/
 }
