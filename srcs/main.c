@@ -68,7 +68,7 @@ int main() {
         while ((size_t)res_recv < sizeof(req))
         {
             printf("boucle de recv\n");
-            messageRecu = recv(sockclient, req, 1, 0);
+            messageRecu = recv(sockclient, req + messageRecu, 1, 0);
             if (messageRecu == -1) 
             {
                 perror("Erreur lors de la reception du message");
@@ -109,7 +109,6 @@ int main() {
         //rep_0 |= (u_int16_t)((1 & 0x1) << 15);
         rep[0] = htons(rep_0);
 
-        id = j.id;
         rep[1] = htons(portUDP);
         rep[2] = htons(portMDIFF);
         
