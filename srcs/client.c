@@ -81,7 +81,6 @@ int main (int argc, const char *argv[]) {
     u_int16_t eq = (ntohs(reponse_serveur[0]) >> 15) & 0x1;
     u_int16_t portUDP = ntohs(reponse_serveur[1]); /* numéro de port sur lequel le serveur attend les actions en UDP des joueurs */
     u_int16_t portMDIFF = ntohs(reponse_serveur[2]); /* numéro de port sur lequel le serveur multidiffusera ses messages aux joueurs */
-    printf("codereq: %u\n id: %u\n eq: %u\n portUDP: %u\n portMDIFF: %u\n ", codereq, id, eq, portUDP, portMDIFF); 
    
     abonnementMultidiff(portMDIFF,reponse_serveur);
    
@@ -105,12 +104,12 @@ void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]){
     adresseMultiDiff.sin6_port = htons(portMDIFF);
     memcpy(adresseMultiDiff.sin6_addr.s6_addr,reponse_serveur+3,sizeof(adresseMultiDiff.sin6_addr.s6_addr));
    
-    char ip_str[INET6_ADDRSTRLEN];
-    if (inet_ntop(AF_INET6, &adresseMultiDiff.sin6_addr, ip_str, INET6_ADDRSTRLEN) == NULL) {
+    char adresse_str[INET6_ADDRSTRLEN];
+    if (inet_ntop(AF_INET6, &adresseMultiDiff.sin6_addr, adresse_str, INET6_ADDRSTRLEN) == NULL) {
         perror("inet_ntop");
         exit(EXIT_FAILURE);
     }
-    printf("Adresse de multidiffusion : %s\n", ip_str);
+    printf("Adresse de multidiffusion : %s\n", adresse_str);
     
     /* liaison de la socket au port pour permettre la réception des paquets */
     if(bind(sockUDP, (struct sockaddr*)&adresseMultiDiff, sizeof(adresseMultiDiff))) {
@@ -121,14 +120,17 @@ void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]){
 
     /* abonnement de l'entité au groupe multicast */
     struct ipv6_mreq group;
-    inet_pton(AF_INET6, ip_str, &group.ipv6mr_multiaddr.s6_addr);
-    group.ipv6mr_interface = if_nametoindex("eth0");
+    memcpy(&group.ipv6mr_multiaddr, &adresseMultiDiff.sin6_addr, sizeof(struct in6_addr));
+    group.ipv6mr_interface = if_nametoindex("en0"); /* interface réseau multicast sur ma machine */
     
     if(setsockopt(sockUDP, IPPROTO_IPV6, IPV6_JOIN_GROUP, &group, sizeof(group)) < 0){
         perror("setsockopt");
         close(sockUDP);
         exit(EXIT_FAILURE);
     }
+
+    printf("abonnement OK\n");
+    close(sockUDP);
     
     /* lecture des messages multicast diffusé par le serveur *
     while (1){    
@@ -142,3 +144,4 @@ void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]){
         printf("Message reçu du serveur: %.*s\n", (int)paquet_recu, buf);
     }*/
 }
+s

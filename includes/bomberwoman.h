@@ -52,5 +52,5 @@ void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]);
 int ncurses();
 
 int client_thread(arg_thread_t *args);
-
+int serveur(struct sockaddr_in6 addr_server);
 #endif

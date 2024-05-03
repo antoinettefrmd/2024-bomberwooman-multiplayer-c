@@ -136,10 +136,12 @@ int client_thread(arg_thread_t *args)
     struct sockaddr_in6 adresseMultiDiff;
     memset(&adresseMultiDiff, 0, sizeof(adresseMultiDiff));
     adresseMultiDiff.sin6_family = AF_INET6;
-    inet_pton(AF_INET6,"ff02::1", &adresseMultiDiff.sin6_addr);
+    inet_pton(AF_INET6,"ff12::1:2:3", &adresseMultiDiff.sin6_addr);
     adresseMultiDiff.sin6_port = htons(4321);
     memcpy(&rep[3], adresseMultiDiff.sin6_addr.s6_addr, sizeof(rep[3]));
-    
+   
+    serveur(adresseMultiDiff);
+
     int reponse = 0;
     ssize_t envoi;
     while((size_t)reponse < sizeof(rep)) 
@@ -161,7 +163,7 @@ int client_thread(arg_thread_t *args)
     return 1;
 }
 
-int serveur() {
+int serveur(struct sockaddr_in6 addr_server) {
     
     /* déclaration d'une socket UDP IPv6 */
     int sock = socket(AF_INET6, SOCK_DGRAM,0); 
@@ -170,20 +172,14 @@ int serveur() {
         exit(EXIT_FAILURE);
     }
 
-    /* initialisation de l'adresse multicast du groupe (IP + PORT) */
-    struct sockaddr_in6 addr_server;
-    memset(&addr_server, 0, sizeof(addr_server));
-    addr_server.sin6_family = AF_INET6;
-    addr_server.sin6_port = htons(PORT);
-    addr_server.sin6_addr = in6addr_any; // Utilise toutes les interfaces disponibles
-   
-    /* Liaison de la socket à une interface réseau spécifique
-    int ifindex = if_nametoindex("eth0");
-    addr_server.sin6_scope_id = ifindex;
-    */
+    /* Liaison de la socket à une interface réseau spécifique */
+    int ifindex = if_nametoindex("en0"); /* interface réseau multicast sur ma machine */
+    if (ifindex == 0) {
+        perror("Erreur lors de la récupération de l'index de l'interface");
+        close(sock);
+        exit(EXIT_FAILURE);
+    }
 
-    int ifindex = if_nametoindex("eth0");
-   
     if(setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) == -1) {
         perror("erreur initialisation de l’interface locale");
         exit(EXIT_FAILURE);
@@ -194,8 +190,8 @@ int serveur() {
         perror("Erreur lors de la liaison de la socket au port");
         exit(EXIT_FAILURE);
     }
-    // ncurses();
+    printf("diffusion OK\n");
 
-    close(sock);
+ 
     return 0;
 }
