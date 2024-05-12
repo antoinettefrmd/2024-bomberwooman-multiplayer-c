@@ -12,6 +12,7 @@
 #include "bomberwoman.h"
 
 #define PORT 12121 /* quel port utiliser ?*/
+static int PORT_MDIFF = 4321;
 
 int rajoute_joueur_partie(liste_parties_t *lp, int type) 
 {
@@ -137,7 +138,7 @@ int client_thread(arg_thread_t *args)
     memset(&adresseMultiDiff, 0, sizeof(adresseMultiDiff));
     adresseMultiDiff.sin6_family = AF_INET6;
     inet_pton(AF_INET6,"ff12::1:2:3", &adresseMultiDiff.sin6_addr);
-    adresseMultiDiff.sin6_port = htons(4321);
+    adresseMultiDiff.sin6_port = htons(PORT_MDIFF);
     memcpy(&rep[3], adresseMultiDiff.sin6_addr.s6_addr, sizeof(rep[3]));
    
     serveur(adresseMultiDiff);

@@ -6,8 +6,9 @@
 #include <string.h>
 
 #define TEXT_SIZE 255
+static int tabulation = 7; // destiné à tous les joueurs
 
-typedef enum ACTION { NONE, UP, DOWN, LEFT, RIGHT, QUIT } ACTION;
+typedef enum ACTION { NONE, UP, DOWN, LEFT, RIGHT, QUIT, ENTREE } ACTION;
 
 typedef struct board {
     char* grid;
@@ -99,6 +100,9 @@ ACTION control(line* l) {
         prev_c = c;
     }
     ACTION a = NONE;
+    if(prev_c != -1){
+     printf("prev_c == %d\n", prev_c);
+    }
     switch (prev_c) {
         case ERR: break;
         case KEY_LEFT:
@@ -114,10 +118,16 @@ ACTION control(line* l) {
         case KEY_BACKSPACE:
             if (l->cursor > 0) l->cursor--;
             break;
+        case 10: // correspond au bouton entrée
+           // messageTchatClient(buf,tabulation,l->data);
+            //memset(l->data, 0, sizeof(l->data)); // on vide data 
+        case 9: // correspond à tabulation
+           tabulation = tabulation == 8 ? 7 : 8;
         default:
             if (prev_c >= ' ' && prev_c <= '~' && l->cursor < TEXT_SIZE)
                 l->data[(l->cursor)++] = prev_c;
             break;
+
     }
     return a;
 }
@@ -145,8 +155,7 @@ bool perform_action(board* b, pos* p, ACTION a) {
     return false;
 }
 
-int ncurses()
-{
+int ncurses() {
     board* b = malloc(sizeof(board));;
     line* l = malloc(sizeof(line));
     l->cursor = 0;

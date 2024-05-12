@@ -7,6 +7,7 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 #include "bomberwoman.h"
+#include "format.c"
 
 #define SIZE_MESS 1024
 
@@ -75,11 +76,12 @@ int main (int argc, const char *argv[]) {
         }
         octets_recu += recu;
     }
-
+/*
     u_int16_t codereq = ntohs(reponse_serveur[0]) & 0x1FFF;
     u_int16_t id = (ntohs(reponse_serveur[0]) >> 13) & 0x3;
     u_int16_t eq = (ntohs(reponse_serveur[0]) >> 15) & 0x1;
-    u_int16_t portUDP = ntohs(reponse_serveur[1]); /* numéro de port sur lequel le serveur attend les actions en UDP des joueurs */
+    u_int16_t portUDP = ntohs(reponse_serveur[1]); numéro de port sur lequel le serveur attend les actions en UDP des joueurs 
+*/    
     u_int16_t portMDIFF = ntohs(reponse_serveur[2]); /* numéro de port sur lequel le serveur multidiffusera ses messages aux joueurs */
    
     abonnementMultidiff(portMDIFF,reponse_serveur);
@@ -144,4 +146,76 @@ void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]){
         printf("Message reçu du serveur: %.*s\n", (int)paquet_recu, buf);
     }*/
 }
-s
+/*
+void messageTchatClient (u_int16_t buf[], int tabulation, char data[], int len) {
+    
+    u_int16_t codereq = ntohs(buf[0]) & 0x1FFF;
+    u_int16_t id = (ntohs(buf[0]) >> 13) & 0x3;
+    u_int16_t eq = (ntohs(buf[0]) >> 15) & 0x1;
+   
+    if (codereq == 9) { // si on est en mode 4 joueurs tabulation est forcément égal à 7
+        tabulation = 7;
+    }
+    
+    formatage du message 
+    u_int16_t* message = tchat_format(tabulation, id, eq, len, data);
+    
+    int paquets_envoyes = 0; 
+    int res_send;
+    size_t taille_message = (2 + (len / 2)) * sizeof(u_int16_t);
+
+     envoie du message 
+    while ((size_t)paquets_envoyes < sizeof(taille_message)) {
+        
+        res_send = send(sock, message, sizeof(taille_message - paquets_envoyes), 0);
+       
+       if (res_send == -1) {
+            perror("Erreur lors de l'envoi du message");
+            exit(EXIT_FAILURE);
+        }
+        if (res_send == 0) break;
+        paquets_envoyes += res_send;  
+    }
+   
+    free(message);
+}
+*/
+/* méthode formatage des messages du tchat */
+//header de chaque message
+u_int16_t header(int codereq, int id, int eq) {
+    u_int16_t res;
+
+    res = 0;
+    res |= (u_int16_t)(codereq & 0x1FFF); // 1FF est un masque hexa pour 111111111111 (12 bits)
+    res |= (u_int16_t)((id & 0x3) << 13); // l'id est placé sur le bit 13
+    res |= (u_int16_t)((eq & 0x1) << 15); // puis eq sur le bit 15
+    return (htons(res)); // le tout est ensuite mis au format big endian
+}
+
+u_int16_t* tchat_format(int codereq, int id, int eq, int len, char * data) {
+    
+    u_int16_t *tchat = malloc((2 + (len / 2)) * sizeof(u_int16_t));
+
+  //  u_int16_t tchat[2 + (len / 2)]; // comme chaque caractère est sur un octet, on divise par deux
+                                    //le nombre de lignes de 16 bits à remplir
+    u_int16_t tchat_1;
+    u_int16_t tchat_i;
+    int j = 1;
+
+    tchat[0] = header(codereq, id, eq); // on place le header sur la première ligne
+
+    tchat_1 = 0;
+    tchat_1 |= (u_int16_t)(len & 0xFF); // le champ data est codé sur 8 bits (FF est le masque hexa pour 11111111)
+    tchat_1 |= (u_int16_t)((data[0]) << 8); // le premier caractère est placé sur le bit 8
+    tchat[1] = htons(tchat_1); // les deux octets sont au format big endiant
+    for (int i = 2; i < 2 + (len / 2); i++) { // on boucle sur le message
+        tchat_i = 0;
+        tchat_i |= (u_int16_t)(data[j] & 0xFF); // chaque caractère est codé sur un octet
+        if (i != len - 1 || len % 2 == 1)
+            tchat_i |= (u_int16_t)((data[j + 1] & 0xFF) << 8); // le prochain caractère rempli le second octet
+        j += 2;
+        tchat[i] = tchat_i; // puis on place les deux octets sur la ligne d'indice i
+    }
+    return tchat;
+   
+}
