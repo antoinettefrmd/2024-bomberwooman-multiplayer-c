@@ -77,7 +77,9 @@ int main (int argc, const char *argv[]) {
         octets_recu += recu;
     }
     printf("Réponse du service : %u\n", ntohs(buf2[0] & 0xFFF));
-    ncurses(buf2);
+
+    
+    //ncurses(buf2);
     close(sock);
     return 0;
 }

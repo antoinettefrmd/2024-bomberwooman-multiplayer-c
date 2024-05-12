@@ -160,7 +160,7 @@ int client_thread(arg_thread_t *args)
         }
         reponse += envoi;
     }
-    //ncurses();
+    ncurses(rep);
     close(sock_client);
     return 1;
 }

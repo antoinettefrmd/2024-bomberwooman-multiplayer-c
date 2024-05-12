@@ -100,6 +100,7 @@ ACTION control(line* l) {
         prev_c = c;
     }
     ACTION a = NONE;
+    printf("prev_c = %d\n", prev_c);
     switch (prev_c) {
         case ERR: break;
         case KEY_LEFT:
@@ -146,7 +147,7 @@ bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf) {
     return false;
 }
 
-int ncurses(u_int16_t *buf)
+int main()
 {
     board* b = malloc(sizeof(board));;
     line* l = malloc(sizeof(line));
