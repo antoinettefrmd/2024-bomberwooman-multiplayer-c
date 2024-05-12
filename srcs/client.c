@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <net/if.h>
 #include <arpa/inet.h>
 #include <math.h>
 #include "bomberwoman.h"
@@ -14,7 +15,7 @@ static int n_move = 0;
 int main (int argc, const char *argv[]) {
 
     if(argc != 2) {
-        perror("Erreur : Veuillez rajouter 2 en argument pour un partie 2v2 ou 4 pour pour une partie chacun pour soi.");
+        perror("Erreur : Veuillez ajouter en argument 2 pour une partie 2v2 ou 4 pour une partie chacun pour soi.");
         exit(1);
     }
 
@@ -64,11 +65,11 @@ int main (int argc, const char *argv[]) {
         paquets_envoyes += res_send;  
     }
 
-   uint16_t buf2[4];
+   u_int16_t reponse_serveur[4];
          
     /* Attente de la réponse  */
-    while ((size_t)octets_recu < sizeof(buf2)) {
-        recu = recv(sock, buf2 + octets_recu, SIZE_MESS, 0);
+    while ((size_t)octets_recu < sizeof(reponse_serveur)) {
+        recu = recv(sock, reponse_serveur + octets_recu, SIZE_MESS, 0);
         if (recu == -1) 
         {
             perror("Erreur lors de la réception");
@@ -76,7 +77,7 @@ int main (int argc, const char *argv[]) {
         }
         octets_recu += recu;
     }
-    printf("Réponse du service : %u\n", ntohs(buf2[0] & 0xFFF));
+    //printf("Réponse du service : %u\n", ntohs(buf2[0] & 0xFFF));
 
     
     //ncurses(buf2);

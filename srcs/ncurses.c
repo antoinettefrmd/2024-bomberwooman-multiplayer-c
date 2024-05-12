@@ -169,7 +169,7 @@ int main()
     setup_board(b);
     while (true) {
         ACTION a = control(l);
-        if (perform_action(b, p, a, buf)) break;
+        //if (perform_action(b, p, a, buf)) break;
         refresh_game(b,l);
         usleep(30*1000);
     }
