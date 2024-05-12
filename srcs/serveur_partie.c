@@ -13,7 +13,9 @@
 
 #define PORT 12121 /* quel port utiliser ?*/
 
-int rajoute_joueur_partie(liste_parties_t *lp, int type) 
+static int PORT_UDP = 2000 ;
+
+int rajoute_joueur_partie(liste_parties_t *lp, int type) // rajouter un gros lock sur la fonction
 {
     joueur_t *j = malloc(sizeof(joueur_t));    
 
@@ -21,13 +23,27 @@ int rajoute_joueur_partie(liste_parties_t *lp, int type)
 
     if (courante->partie == NULL)
     {
+
+        int sock_serv_UDP = socket(PF_INET6, SOCK_DGRAM, 0);
+        if (sock_serv_UDP < 0) return -1;
+
+        struct sockaddr_in6 servadr;
+        memset(&servadr, 0, sizeof(servadr));
+        servadr.sin6_family = AF_INET6;
+        servadr.sin6_addr = in6addr_any;
+        servadr.sin6_port = htons(PORT_UDP);
+
+        bind(sock_serv_UDP, (struct sockaddr*)&servadr, sizeof(servadr));
+
         partie_t *p = malloc(sizeof(partie_t));
         j->id = 0;
         if (!type) { j->id_equipe = 0; }
         p->joueurs[0] = j;
         p->nb_joueurs_courant = 1;
-        p->port = 1903;
+        p->port = PORT_UDP;
+        p->adresse_serv_UDP = servadr;
         lp->partie = p;
+        PORT_UDP++;
     }
     else 
     {
@@ -49,15 +65,29 @@ int rajoute_joueur_partie(liste_parties_t *lp, int type)
         }
         else
         {
+            printf("aaa\n");
+
+            int sock_serv_UDP = socket(PF_INET6, SOCK_DGRAM, 0);
+            if (sock_serv_UDP < 0) return -1;
+            struct sockaddr_in6 servadr;
+            memset(&servadr, 0, sizeof(servadr));
+            servadr.sin6_family = AF_INET6;
+            servadr.sin6_addr = in6addr_any;
+            servadr.sin6_port = htons(PORT_UDP);
+            if (bind(sock_serv_UDP, (struct sockaddr *)&servadr, sizeof(servadr)) < 0) return -1;
+        printf("bbbb\n");
+
             partie_t *p = malloc(sizeof(partie_t));
             j->id=0;
             if (!type) { j->id_equipe = 0; }
             p->joueurs[0] = j;
             p->nb_joueurs_courant = 1;
-            p->port++;
+            p->port = PORT_UDP;
             liste_parties_t *lp2 = malloc(sizeof(liste_parties_t));
             lp2->partie = p;
+            p->adresse_serv_UDP = servadr;
             courante->suivant = lp2;
+            PORT_UDP++;            
         }
     }
     return 0;
@@ -156,6 +186,9 @@ int client_thread(arg_thread_t *args)
         }
         reponse += envoi;
     }
+    char buf[25];
+    socklen_t addr_len = sizeof(courante->partie->adresse_serv_UDP);
+    if (recvfrom(courante->partie->port, buf, sizeof(buf), 0, (struct sockaddr *)&courante->partie->adresse_serv_UDP, &addr_len)<0){ return -1;}
 
     close(sock_client);
     return 1;
@@ -194,6 +227,7 @@ int serveur() {
         perror("Erreur lors de la liaison de la socket au port");
         exit(EXIT_FAILURE);
     }
+
     // ncurses();
 
     close(sock);

@@ -85,6 +85,24 @@ int main (int argc, const char *argv[]) {
    
     abonnementMultidiff(portMDIFF,reponse_serveur);
    
+    int sock_UDP = socket(PF_INET6, SOCK_DGRAM, 0);
+    if (sock_UDP < 0){ perror("socket failure"); }
+
+    struct sockaddr_in6 servadr_dest;
+    memset(&servadr_dest, 0, sizeof(servadr_dest));
+    servadr_dest.sin6_family = AF_INET6;
+    if (inet_pton(AF_INET6, "::1", &servadr_dest.sin6_addr) != 1) {
+        perror("Erreur lors de la conversion de l'adresse IP");
+        return -1;
+    }
+    servadr_dest.sin6_port = portUDP;
+
+    printf("aaa\n");
+    char buf[25];
+    sprintf(buf, "coucou ça fonctionne !");
+    if (sendto(sock_UDP, buf , strlen(buf), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest))< 0) { return -1; }
+
+    close(sock_UDP);
     close(sock);
     return 0;
 }

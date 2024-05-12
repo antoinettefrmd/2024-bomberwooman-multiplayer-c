@@ -3,7 +3,8 @@
 int main() {
 
     arg_thread_t args;
-
+    memset(&args, 0, sizeof(args));
+    
     liste_parties_t *parties_2v2;
     liste_parties_t *parties_4_adv;
 
@@ -64,6 +65,7 @@ int main() {
         // Chaque client va s'éxecuter dans un thread
         pthread_t thread_client;
         if (pthread_create(&thread_client, NULL, (void *)client_thread,(void *)&args) < 0) {perror("Création thread"); exit(1);}
+
     }
     
     close(sock);

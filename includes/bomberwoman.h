@@ -28,6 +28,7 @@ typedef struct partie {
     int nb_joueurs_courant;
     joueur_t *joueurs[4];
     int port;
+    struct sockaddr_in6 adresse_serv_UDP;
 } partie_t;
 
 
