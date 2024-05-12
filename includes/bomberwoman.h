@@ -46,6 +46,7 @@ typedef struct arg_thread {
     // joueur_t *joueur;
     liste_parties_t *liste_2v2;
     liste_parties_t *liste_4adv;
+    pthread_mutex_t *verrou;
 } arg_thread_t;
 
 int client(const char *argv[]);

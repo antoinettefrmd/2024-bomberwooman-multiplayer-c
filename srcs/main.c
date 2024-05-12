@@ -2,8 +2,13 @@
 
 int main() {
 
+    int nb_thread = 0;
+    pthread_t tpthread[10];
+    pthread_mutex_t verrou = PTHREAD_MUTEX_INITIALIZER;
+
     arg_thread_t args;
     memset(&args, 0, sizeof(args));
+    args.verrou = &verrou;
     
     liste_parties_t *parties_2v2;
     liste_parties_t *parties_4_adv;
@@ -63,10 +68,12 @@ int main() {
         args.socket_client = sockclient;
 
         // Chaque client va s'éxecuter dans un thread
-        pthread_t thread_client;
-        if (pthread_create(&thread_client, NULL, (void *)client_thread,(void *)&args) < 0) {perror("Création thread"); exit(1);}
-
+        if (pthread_create(&tpthread[nb_thread], NULL, (void *)client_thread,(void *)&args) < 0) {perror("Création thread"); exit(1);}
+        nb_thread++;
     }
+
+    for(int i=0; i<15; i++)
+        pthread_join(tpthread[i], NULL);
     
     close(sock);
     return 0;

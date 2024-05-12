@@ -83,7 +83,7 @@ int main (int argc, const char *argv[]) {
     u_int16_t portMDIFF = ntohs(reponse_serveur[2]); /* numéro de port sur lequel le serveur multidiffusera ses messages aux joueurs */
     printf("codereq: %u\n id: %u\n eq: %u\n portUDP: %u\n portMDIFF: %u\n ", codereq, id, eq, portUDP, portMDIFF); 
    
-    abonnementMultidiff(portMDIFF,reponse_serveur);
+    // abonnementMultidiff(portMDIFF,reponse_serveur);
    
     int sock_UDP = socket(PF_INET6, SOCK_DGRAM, 0);
     if (sock_UDP < 0){ perror("socket failure"); }
