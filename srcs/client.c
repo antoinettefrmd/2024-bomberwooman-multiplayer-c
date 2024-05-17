@@ -6,10 +6,12 @@
 #include <netinet/in.h>
 #include <net/if.h>
 #include <arpa/inet.h>
+#include <math.h>
 #include "bomberwoman.h"
 #include "format.c"
 
 #define SIZE_MESS 1024
+static int n_move = 0;
 
 int main (int argc, const char *argv[]) {
 
@@ -76,21 +78,70 @@ int main (int argc, const char *argv[]) {
         }
         octets_recu += recu;
     }
-/*
+    //printf("Réponse du service : %u\n", ntohs(buf2[0] & 0xFFF));
+
     u_int16_t codereq = ntohs(reponse_serveur[0]) & 0x1FFF;
     u_int16_t id = (ntohs(reponse_serveur[0]) >> 13) & 0x3;
     u_int16_t eq = (ntohs(reponse_serveur[0]) >> 15) & 0x1;
     u_int16_t portUDP = ntohs(reponse_serveur[1]); numéro de port sur lequel le serveur attend les actions en UDP des joueurs 
 */    
     u_int16_t portMDIFF = ntohs(reponse_serveur[2]); /* numéro de port sur lequel le serveur multidiffusera ses messages aux joueurs */
+    printf("codereq: %u\n id: %u\n eq: %u\n portUDP: %u\n portMDIFF: %u\n ", codereq, id, eq, portUDP, portMDIFF); 
    
-    abonnementMultidiff(portMDIFF,reponse_serveur);
+    // abonnementMultidiff(portMDIFF,reponse_serveur);
    
+    int sock_UDP = socket(PF_INET6, SOCK_DGRAM, 0);
+    if (sock_UDP < 0){ perror("socket failure"); }
+
+    struct sockaddr_in6 servadr_dest;
+    memset(&servadr_dest, 0, sizeof(servadr_dest));
+    servadr_dest.sin6_family = AF_INET6;
+    if (inet_pton(AF_INET6, "::1", &servadr_dest.sin6_addr) != 1) {
+        perror("Erreur lors de la conversion de l'adresse IP");
+        return -1;
+    }
+    servadr_dest.sin6_port = htons(portUDP);
+    //printf("port UDP cote client : %d", ntohs(portUDP));
+
+    ncurses(reponse_serveur, sock_UDP, servadr_dest);
+    //char buf[25];
+    //sprintf(buf, "coucou ça fonctionne !");
+    //if (sendto(sock_UDP, buf , strlen(buf), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest))< 0) { printf("sendto failed\n");return -1; }
+
+    close(sock_UDP);
     close(sock);
     return 0;
 }
 
-void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]){
+u_int16_t header(int codereq, int id, int eq) {
+    u_int16_t res;
+
+    res = 0;
+    res |= (u_int16_t)(codereq & 0x1FFF); // 1FF est un masque hexa pour 111111111111 (12 bits)
+    res |= (u_int16_t)((id & 0x3) << 13); // l'id est placé sur le bit 13
+    res |= (u_int16_t)((eq & 0x1) << 15); // puis eq sur le bit 15
+    return (htons(res)); // le tout est ensuite mis au format big endian
+}
+
+void actions(int a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 servadr_dest) {
+    //printf("action = %d et codereq = %u\n",a, ntohs(buf[0] & 0xFF00));
+     u_int16_t move[2];
+    u_int16_t move_1;
+
+    if (ntohs(buf[0] & 0xFF00) == 9)
+        move[0] = header(5, (buf[0] >> 13) & 0x3, (buf[0] >> 15) & 0x1);
+    else
+        move[0] =  header(5, (buf[0] >> 13) & 0x3, 0);        
+
+    move_1 = 0;
+    move_1 |= (u_int16_t)((n_move % (int)pow(2, 13)) & 0x1FFF); // le numéro est également codé sur 12 bits
+    n_move++;
+    move_1 |= (u_int16_t)((a & 0x3) << 13); // action est placé sur le bit 13
+    move[1] = htons(move_1); // les deux octets sont mis au format big endian
+    if (sendto(sock_UDP, move, sizeof(move), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest)) < 0) {exit (0);}
+
+}
+   void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]){
     
     /* le client doit s'abonner à l'adresseMultiDiff de multidiffusion */
     int sockUDP = socket(PF_INET6, SOCK_DGRAM,0);
@@ -145,77 +196,4 @@ void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]){
 
         printf("Message reçu du serveur: %.*s\n", (int)paquet_recu, buf);
     }*/
-}
-/*
-void messageTchatClient (u_int16_t buf[], int tabulation, char data[], int len) {
-    
-    u_int16_t codereq = ntohs(buf[0]) & 0x1FFF;
-    u_int16_t id = (ntohs(buf[0]) >> 13) & 0x3;
-    u_int16_t eq = (ntohs(buf[0]) >> 15) & 0x1;
-   
-    if (codereq == 9) { // si on est en mode 4 joueurs tabulation est forcément égal à 7
-        tabulation = 7;
-    }
-    
-    formatage du message 
-    u_int16_t* message = tchat_format(tabulation, id, eq, len, data);
-    
-    int paquets_envoyes = 0; 
-    int res_send;
-    size_t taille_message = (2 + (len / 2)) * sizeof(u_int16_t);
-
-     envoie du message 
-    while ((size_t)paquets_envoyes < sizeof(taille_message)) {
-        
-        res_send = send(sock, message, sizeof(taille_message - paquets_envoyes), 0);
-       
-       if (res_send == -1) {
-            perror("Erreur lors de l'envoi du message");
-            exit(EXIT_FAILURE);
-        }
-        if (res_send == 0) break;
-        paquets_envoyes += res_send;  
-    }
-   
-    free(message);
-}
-*/
-/* méthode formatage des messages du tchat */
-//header de chaque message
-u_int16_t header(int codereq, int id, int eq) {
-    u_int16_t res;
-
-    res = 0;
-    res |= (u_int16_t)(codereq & 0x1FFF); // 1FF est un masque hexa pour 111111111111 (12 bits)
-    res |= (u_int16_t)((id & 0x3) << 13); // l'id est placé sur le bit 13
-    res |= (u_int16_t)((eq & 0x1) << 15); // puis eq sur le bit 15
-    return (htons(res)); // le tout est ensuite mis au format big endian
-}
-
-u_int16_t* tchat_format(int codereq, int id, int eq, int len, char * data) {
-    
-    u_int16_t *tchat = malloc((2 + (len / 2)) * sizeof(u_int16_t));
-
-  //  u_int16_t tchat[2 + (len / 2)]; // comme chaque caractère est sur un octet, on divise par deux
-                                    //le nombre de lignes de 16 bits à remplir
-    u_int16_t tchat_1;
-    u_int16_t tchat_i;
-    int j = 1;
-
-    tchat[0] = header(codereq, id, eq); // on place le header sur la première ligne
-
-    tchat_1 = 0;
-    tchat_1 |= (u_int16_t)(len & 0xFF); // le champ data est codé sur 8 bits (FF est le masque hexa pour 11111111)
-    tchat_1 |= (u_int16_t)((data[0]) << 8); // le premier caractère est placé sur le bit 8
-    tchat[1] = htons(tchat_1); // les deux octets sont au format big endiant
-    for (int i = 2; i < 2 + (len / 2); i++) { // on boucle sur le message
-        tchat_i = 0;
-        tchat_i |= (u_int16_t)(data[j] & 0xFF); // chaque caractère est codé sur un octet
-        if (i != len - 1 || len % 2 == 1)
-            tchat_i |= (u_int16_t)((data[j + 1] & 0xFF) << 8); // le prochain caractère rempli le second octet
-        j += 2;
-        tchat[i] = tchat_i; // puis on place les deux octets sur la ligne d'indice i
-    }
-    return tchat;
-   
 }

@@ -26,10 +26,10 @@ BLUE		=	\033[0;94m
 MAGENTA		=	\033[0;95m
 CYAN		=	\033[0;96m
 WHITE		=	\033[0;97m
-
+ 
 SRC_FILES	=	main serveur_partie
 
-CLIENT_FILES =  client
+CLIENT_FILES =  client ncurses
 
 
 
@@ -47,11 +47,11 @@ all:		$(NAME) $(NAME_C)
 
 
 $(NAME):	$(OBJ)
-			@$(CC) $(OBJ) -pthread -o $(NAME)
+			@$(CC) $(OBJ) -pthread -lncurses -o $(NAME)
 			@echo "$(GREEN)$(BOLD)$(NAME) compiled!$(DEF_COLOR)"
 
 $(NAME_C):	$(OBJ_C)
-			@$(CC) $(OBJ_C) -pthread -o $(NAME_C)
+			@$(CC) $(OBJ_C) -pthread -lncurses -o $(NAME_C)
 			@echo "$(GREEN)$(MAGENTA)$(NAME_C) compiled!$(DEF_COLOR)"
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c | $(OBJF)
