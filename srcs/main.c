@@ -70,6 +70,39 @@ int main() {
         // Chaque client va s'éxecuter dans un thread
         if (pthread_create(&tpthread[nb_thread], NULL, (void *)client_thread,(void *)&args) < 0) {perror("Création thread"); exit(1);}
         nb_thread++;
+
+        int message1;
+        fd_set rset;
+        FD_ZERO(&rset);
+        FD_SET(sock, &rset);
+        select(sock + 1, &rset, NULL, 0, NULL);
+        if (FD_ISSET(sock, &rset)) {
+            if(recv(sock, &message1, sizeof(int), 0) < 0)
+                perror("recv");
+
+            printf("len = %d", message1);
+            int len = message1;
+
+            int paquets_envoyes = 0; 
+            int res_recv;
+            size_t taille_message = (2 + (len / 2)) * sizeof(u_int16_t);
+            u_int16_t *message = malloc((2 + (len / 2)) * sizeof(u_int16_t));
+            
+            while ((size_t)paquets_envoyes < sizeof(taille_message)) {
+                
+                res_recv = recv(sock, message, sizeof(taille_message - paquets_envoyes), 0);
+            
+                if (res_recv == -1) {
+                    perror("Erreur lors de la reception du message TCP");
+                    exit(EXIT_FAILURE);
+                }
+                if (res_recv == 0) break;
+                paquets_envoyes += res_recv;  
+            }
+            printf("reception message tchat");
+            free(message);
+        }
+
     }
 
     for(int i=0; i<15; i++)

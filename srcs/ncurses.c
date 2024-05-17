@@ -89,7 +89,7 @@ void refresh_game(board* b, line* l) {
     refresh(); // Apply the changes to the terminal
 }
 
-ACTION control(line* l) {
+ACTION control(line* l, int sock_TCP, uint16_t *rep_serv) {
     int c;
     int prev_c = ERR;
     // We consume all similar consecutive key presses
@@ -118,8 +118,8 @@ ACTION control(line* l) {
             if (l->cursor > 0) l->cursor--;
             break;
         case 10: // correspond au bouton entrée
-           // messageTchatClient(buf,tabulation,l->data);
-            //memset(l->data, 0, sizeof(l->data)); // on vide data 
+            messageTchatClient(sock_TCP, rep_serv, tabulation, l->data, strlen(l->data));
+            memset(l->data, 0, sizeof(l->data)); // on vide data 
         case 9: // correspond à tabulation
            tabulation = tabulation == 8 ? 7 : 8;
         default:
@@ -154,7 +154,7 @@ bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, st
     return false;
 }
 
-int ncurses(uint16_t *rep_serv, int sock_UDP, struct sockaddr_in6 serv_dest)
+int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 serv_dest)
 {
     board* b = malloc(sizeof(board));;
     line* l = malloc(sizeof(line));
@@ -175,7 +175,7 @@ int ncurses(uint16_t *rep_serv, int sock_UDP, struct sockaddr_in6 serv_dest)
 
     setup_board(b);
     while (true) {
-        ACTION a = control(l);
+        ACTION a = control(l, sock_TCP, rep_serv);
         if (perform_action(b, p, a, rep_serv, sock_UDP, serv_dest)) break;
         refresh_game(b,l);
         usleep(30*1000);
