@@ -6,9 +6,11 @@
 #include <netinet/in.h>
 #include <net/if.h>
 #include <arpa/inet.h>
+#include <math.h>
 #include "bomberwoman.h"
 
 #define SIZE_MESS 1024
+static int n_move = 0;
 
 int main (int argc, const char *argv[]) {
 
@@ -75,6 +77,7 @@ int main (int argc, const char *argv[]) {
         }
         octets_recu += recu;
     }
+    //printf("Réponse du service : %u\n", ntohs(buf2[0] & 0xFFF));
 
     u_int16_t codereq = ntohs(reponse_serveur[0]) & 0x1FFF;
     u_int16_t id = (ntohs(reponse_serveur[0]) >> 13) & 0x3;
@@ -97,16 +100,45 @@ int main (int argc, const char *argv[]) {
     }
     servadr_dest.sin6_port = htons(portUDP);
 
-    char buf[25];
-    sprintf(buf, "coucou ça fonctionne !");
-    if (sendto(sock_UDP, buf , strlen(buf), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest))< 0) { return -1; }
+    ncurses(reponse_serveur, sock_UDP, servadr_dest);
+    //char buf[25];
+    //sprintf(buf, "coucou ça fonctionne !");
+    //if (sendto(sock_UDP, buf , strlen(buf), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest))< 0) { printf("sendto failed\n");return -1; }
 
     close(sock_UDP);
     close(sock);
     return 0;
 }
 
-void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]){
+u_int16_t header(int codereq, int id, int eq) {
+    u_int16_t res;
+
+    res = 0;
+    res |= (u_int16_t)(codereq & 0x1FFF); // 1FF est un masque hexa pour 111111111111 (12 bits)
+    res |= (u_int16_t)((id & 0x3) << 13); // l'id est placé sur le bit 13
+    res |= (u_int16_t)((eq & 0x1) << 15); // puis eq sur le bit 15
+    return (htons(res)); // le tout est ensuite mis au format big endian
+}
+
+void actions(int a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 servadr_dest) {
+    //printf("action = %d et codereq = %u\n",a, ntohs(buf[0] & 0xFF00));
+     u_int16_t move[2];
+    u_int16_t move_1;
+
+    if (ntohs(buf[0] & 0xFF00) == 9)
+        move[0] = header(5, (buf[0] >> 13) & 0x3, (buf[0] >> 15) & 0x1);
+    else
+        move[0] =  header(5, (buf[0] >> 13) & 0x3, 0);        
+
+    move_1 = 0;
+    move_1 |= (u_int16_t)((n_move % (int)pow(2, 13)) & 0x1FFF); // le numéro est également codé sur 12 bits
+    n_move++;
+    move_1 |= (u_int16_t)((a & 0x3) << 13); // action est placé sur le bit 13
+    move[1] = htons(move_1); // les deux octets sont mis au format big endian
+    if (sendto(sock_UDP, move, sizeof(move), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest)) < 0) {exit (0);}
+
+}
+   void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]){
     
     /* le client doit s'abonner à l'adresseMultiDiff de multidiffusion */
     int sockUDP = socket(PF_INET6, SOCK_DGRAM,0);
@@ -139,7 +171,7 @@ void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]){
     /* abonnement de l'entité au groupe multicast */
     struct ipv6_mreq group;
     memcpy(&group.ipv6mr_multiaddr, &adresseMultiDiff.sin6_addr, sizeof(struct in6_addr));
-    group.ipv6mr_interface = if_nametoindex("wlp0s20f3"); /* interface réseau multicast sur ma machine */
+    group.ipv6mr_interface = if_nametoindex("en0"); /* interface réseau multicast sur ma machine */
     
     if(setsockopt(sockUDP, IPPROTO_IPV6, IPV6_JOIN_GROUP, &group, sizeof(group)) < 0){
         perror("setsockopt");

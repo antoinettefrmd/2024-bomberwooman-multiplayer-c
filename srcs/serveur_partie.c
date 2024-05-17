@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#include <sys/select.h>
 #include "bomberwoman.h"
 
 #define PORT 12121 /* quel port utiliser ?*/
@@ -16,7 +17,7 @@
 static int PORT_UDP = 1234;
 int PORT_MDIF = 4321;
 
-int rajoute_joueur_partie(liste_parties_t *lp, int type) // rajouter un gros lock sur la fonction
+int rajoute_joueur_partie(liste_parties_t *lp, int type_4) // rajouter un gros lock sur la fonction
 {
     joueur_t *j = malloc(sizeof(joueur_t));    
 
@@ -40,16 +41,14 @@ int rajoute_joueur_partie(liste_parties_t *lp, int type) // rajouter un gros loc
 
         partie_t *p = malloc(sizeof(partie_t));
         j->id = 0;
-        if (!type) { j->id_equipe = 0; }
+        j->id_equipe = 0;
         p->joueurs[0] = j;
         p->nb_joueurs_courant = 1;
         p->port = PORT_UDP;
         p->adresse_serv_UDP = servadr;
         p->sock_serv_UDP = sock_serv_UDP;
         lp->partie = p;
-        PORT_UDP++;
-        printf("nb joueur courant : %d\n", p->nb_joueurs_courant);
-       
+        PORT_UDP++;       
     }
     else 
     {
@@ -61,13 +60,13 @@ int rajoute_joueur_partie(liste_parties_t *lp, int type) // rajouter un gros loc
         if (p_courante->nb_joueurs_courant < 4)
         {
             j->id = p_courante->nb_joueurs_courant;
-            if (!type) 
+            if (!type_4) 
             {
                 if (p_courante->nb_joueurs_courant < 2) {j->id_equipe = 0;}
                 else {j->id_equipe = 1;}
             }
             p_courante->joueurs[p_courante->nb_joueurs_courant] = j;
-            p_courante->nb_joueurs_courant++;
+            p_courante->nb_joueurs_courant+=1;
         }
         else
         {
@@ -83,7 +82,7 @@ int rajoute_joueur_partie(liste_parties_t *lp, int type) // rajouter un gros loc
 
             partie_t *p = malloc(sizeof(partie_t));
             j->id=0;
-            if (!type) { j->id_equipe = 0; }
+            j->id_equipe = 0;
             p->joueurs[0] = j;
             p->nb_joueurs_courant = 1;
             p->port = PORT_UDP;
@@ -136,12 +135,11 @@ int client_thread(arg_thread_t *args)
 
     u_int16_t rep_0 = 0;
 
-    u_int16_t rep[4];
+    u_int16_t rep[11];
     memset(&rep, 0, sizeof(u_int16_t)*4);
 
 
     liste_parties_t *courante;
-    printf("%d\n",ntohs(req[0]));
     pthread_mutex_lock(args->verrou);
     if (req[0] == 2) 
     { 
@@ -161,10 +159,11 @@ int client_thread(arg_thread_t *args)
     {
         courante = courante->suivant;
     }
-
-    u_int16_t id = (courante->partie->nb_joueurs_courant) << 1;
+    
+    int nb_joueurs = courante->partie->nb_joueurs_courant;
+    u_int16_t id = ( nb_joueurs - 1);
     rep_0 |= (u_int16_t)((id & 0x3) << 13);
-    rep_0 |= (u_int16_t)((1 & 0x1) << 15);
+    rep_0 |= (u_int16_t)((courante->partie->joueurs[nb_joueurs-1]->id_equipe & 0x1) << 15);
     rep[0] = htons(rep_0);
 
     rep[1] = htons(courante->partie->port);
@@ -175,7 +174,10 @@ int client_thread(arg_thread_t *args)
     adresseMultiDiff.sin6_family = AF_INET6;
     inet_pton(AF_INET6,"ff12::1:2:3", &adresseMultiDiff.sin6_addr);
     adresseMultiDiff.sin6_port = htons(PORT_MDIF);
-    memcpy(&rep[3], adresseMultiDiff.sin6_addr.s6_addr, sizeof(rep[3]));
+    for (int i = 0; i < 11; i++) {
+        memcpy(&rep[i + 3], adresseMultiDiff.sin6_addr.s6_addr + (i * 2), sizeof(rep[i + 3]));
+    }
+    
    
     int reponse = 0;
     ssize_t envoi;
@@ -194,18 +196,25 @@ int client_thread(arg_thread_t *args)
         reponse += envoi;
     }
 
-    printf("recvfrom :\n");
-    char buf[25];
+    //char buf[25];
+    uint16_t client_move[2];
     socklen_t addr_len = sizeof(courante->partie->adresse_serv_UDP);
 
     int sock_serv_UDP = courante->partie->sock_serv_UDP;
 
+    while (1) {
+        fd_set rset;
+        FD_ZERO(&rset);
+        FD_SET(sock_serv_UDP, &rset);
+        select(sock_serv_UDP + 1, &rset, NULL, 0, NULL);
+        if (FD_ISSET(sock_serv_UDP, &rset)) {
+            if (recvfrom(sock_serv_UDP, client_move, sizeof(client_move), 0, (struct sockaddr *)&courante->partie->adresse_serv_UDP, &addr_len)<0){ printf("arrrrr\n"); return -1;}
+        }
 
-    if (recvfrom(sock_serv_UDP, buf, sizeof(buf), 0, (struct sockaddr *)&courante->partie->adresse_serv_UDP, &addr_len)<0){ printf("arrrrr\n"); return -1;}
-     printf("buf : %s\n", buf);
-
-    // serveur();
-
+        // serveur();
+        uint16_t action = (ntohs(client_move[1]) >> 13) & 0x3;
+        printf("action : %u\n", action);
+    }
     close(sock_client);
     return 1;
 }
