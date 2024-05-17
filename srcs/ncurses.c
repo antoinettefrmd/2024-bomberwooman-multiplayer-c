@@ -4,10 +4,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include "bomberwoman.h"
 
 #define TEXT_SIZE 255
+static int tabulation = 7; // destiné à tous les joueurs
 
-typedef enum ACTION { NONE, UP, DOWN, LEFT, RIGHT, QUIT } ACTION;
+typedef enum ACTION { NONE, UP, DOWN, LEFT, RIGHT, QUIT, ENTREE } ACTION;
 
 typedef struct board {
     char* grid;
@@ -99,6 +101,7 @@ ACTION control(line* l) {
         prev_c = c;
     }
     ACTION a = NONE;
+    //printf("prev_c = %d\n", prev_c);
     switch (prev_c) {
         case ERR: break;
         case KEY_LEFT:
@@ -114,26 +117,32 @@ ACTION control(line* l) {
         case KEY_BACKSPACE:
             if (l->cursor > 0) l->cursor--;
             break;
+        case 10: // correspond au bouton entrée
+           // messageTchatClient(buf,tabulation,l->data);
+            //memset(l->data, 0, sizeof(l->data)); // on vide data 
+        case 9: // correspond à tabulation
+           tabulation = tabulation == 8 ? 7 : 8;
         default:
             if (prev_c >= ' ' && prev_c <= '~' && l->cursor < TEXT_SIZE)
                 l->data[(l->cursor)++] = prev_c;
             break;
+
     }
     return a;
 }
 
-bool perform_action(board* b, pos* p, ACTION a) {
+bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 serv_dest) {
     int xd = 0;
     int yd = 0;
     switch (a) {
         case LEFT:
-            xd = -1; yd = 0; break;
+            xd = -1; yd = 0; actions(3, buf, sock_UDP, serv_dest); break;
         case RIGHT:
-            xd = 1; yd = 0; break;
+            xd = 1; yd = 0; actions(1, buf, sock_UDP, serv_dest); break;
         case UP:
-            xd = 0; yd = -1; break;
+            xd = 0; yd = -1; actions(0, buf, sock_UDP, serv_dest);  break;
         case DOWN:
-            xd = 0; yd = 1; break;
+            xd = 0; yd = 1; actions(2, buf, sock_UDP, serv_dest);  break; 
         case QUIT:
             return true;
         default: break;
@@ -145,7 +154,7 @@ bool perform_action(board* b, pos* p, ACTION a) {
     return false;
 }
 
-int ncurses()
+int ncurses(uint16_t *rep_serv, int sock_UDP, struct sockaddr_in6 serv_dest)
 {
     board* b = malloc(sizeof(board));;
     line* l = malloc(sizeof(line));
@@ -167,7 +176,7 @@ int ncurses()
     setup_board(b);
     while (true) {
         ACTION a = control(l);
-        if (perform_action(b, p, a)) break;
+        if (perform_action(b, p, a, rep_serv, sock_UDP, serv_dest)) break;
         refresh_game(b,l);
         usleep(30*1000);
     }

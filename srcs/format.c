@@ -1,6 +1,7 @@
 #include "bomberwoman.h"
+#include <math.h>
 
-//header de chaque message
+/*header de chaque message
 u_int16_t header(int codereq, int id, int eq) {
     u_int16_t res;
 
@@ -10,7 +11,7 @@ u_int16_t header(int codereq, int id, int eq) {
     res |= (u_int16_t)((eq & 0x1) << 15); // puis eq sur le bit 15
     return (htons(res)); // le tout est ensuite mis au format big endian
 }
-
+*/
 void move_format(int codereq, int id, int eq, int num, int action) {
     u_int16_t move[2];
     u_int16_t move_1;
@@ -23,29 +24,7 @@ void move_format(int codereq, int id, int eq, int num, int action) {
     move[1] = htons(move_1); // les deux octets sont mis au format big endian
 }
 
-void tchat_format(int codereq, int id, int eq, int len, char * data) {
-     u_int16_t tchat[2 + (len / 2)]; // comme chaque caractère est sur un octet, on divise par deux
-                                    //le nombre de lignes de 16 bits à remplir
-    u_int16_t tchat_1;
-    u_int16_t tchat_i;
-    int j = 1;
-
-    tchat[0] = header(codereq, id, eq); // on place le header sur la première ligne
-
-    tchat_1 = 0;
-    tchat_1 |= (u_int16_t)(len & 0xFF); // le champ data est codé sur 8 bits (FF est le masque hexa pour 11111111)
-    tchat_1 |= (u_int16_t)((data[0]) << 8); // le premier caractère est placé sur le bit 8
-    tchat[1] = htons(tchat_1); // les deux octets sont au format big endiant
-    for (int i = 2; i < 2 + (len / 2); i++) { // on boucle sur le message
-        tchat_i = 0;
-        tchat_i |= (u_int16_t)(data[j] & 0xFF); // chaque caractère est codé sur un octet
-        if (i != len - 1 || len % 2 == 1)
-            tchat_i |= (u_int16_t)((data[j + 1] & 0xFF) << 8); // le prochain caractère rempli le second octet
-        j += 2;
-        tchat[i] = tchat_i; // puis on place les deux octets sur la ligne d'indice i
-    }
-}
-
+/*
 void grille_format(int num, int hauteur, int largeur, int **plateau) {
     u_int16_t grille[3 + (hauteur * largeur) / 2]; // pareil que le tchat, chaque case est codée sur un octet
     u_int16_t grille_2;
@@ -105,3 +84,4 @@ void modif_format(int num, int nb, int **cases) {
         }
     }
 }
+*/
