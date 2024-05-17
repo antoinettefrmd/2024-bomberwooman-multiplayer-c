@@ -100,7 +100,7 @@ ACTION control(line* l) {
         prev_c = c;
     }
     ACTION a = NONE;
-    printf("prev_c = %d\n", prev_c);
+    //printf("prev_c = %d\n", prev_c);
     switch (prev_c) {
         case ERR: break;
         case KEY_LEFT:
@@ -124,18 +124,18 @@ ACTION control(line* l) {
     return a;
 }
 
-bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf) {
+bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 serv_dest) {
     int xd = 0;
     int yd = 0;
     switch (a) {
         case LEFT:
-            xd = -1; yd = 0; actions(3, buf); break;
+            xd = -1; yd = 0; actions(3, buf, sock_UDP, serv_dest); break;
         case RIGHT:
-            xd = 1; yd = 0; actions(1, buf); break;
+            xd = 1; yd = 0; actions(1, buf, sock_UDP, serv_dest); break;
         case UP:
-            xd = 0; yd = -1; actions(0, buf);  break;
+            xd = 0; yd = -1; actions(0, buf, sock_UDP, serv_dest);  break;
         case DOWN:
-            xd = 0; yd = 1; actions(2, buf);  break; 
+            xd = 0; yd = 1; actions(2, buf, sock_UDP, serv_dest);  break; 
         case QUIT:
             return true;
         default: break;
@@ -147,7 +147,7 @@ bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf) {
     return false;
 }
 
-int main()
+int ncurses(uint16_t *rep_serv, int sock_UDP, struct sockaddr_in6 serv_dest)
 {
     board* b = malloc(sizeof(board));;
     line* l = malloc(sizeof(line));
@@ -169,7 +169,7 @@ int main()
     setup_board(b);
     while (true) {
         ACTION a = control(l);
-        //if (perform_action(b, p, a, buf)) break;
+        if (perform_action(b, p, a, rep_serv, sock_UDP, serv_dest)) break;
         refresh_game(b,l);
         usleep(30*1000);
     }

@@ -28,6 +28,7 @@ typedef struct partie {
     int nb_joueurs_courant;
     joueur_t *joueurs[4];
     int port;
+    struct sockaddr_in6 adresse_serv_UDP;
 } partie_t;
 
 
@@ -45,13 +46,13 @@ typedef struct arg_thread {
     // joueur_t *joueur;
     liste_parties_t *liste_2v2;
     liste_parties_t *liste_4adv;
+    pthread_mutex_t *verrou;
 } arg_thread_t;
 
 int client(const char *argv[]);
-int ncurses(u_int16_t *buf);
-void actions(int a, u_int16_t *buf);
+int ncurses(uint16_t *rep_serv, int sock_UDP, struct sockaddr_in6 serv_dest);
+void actions(int a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 servadr_dest);
 u_int16_t header(int codereq, int id, int eq);
-//void c_actions(int a);
 void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]);
 int ncurses();
 
