@@ -48,6 +48,8 @@ int rajoute_joueur_partie(liste_parties_t *lp, int type) // rajouter un gros loc
         p->sock_serv_UDP = sock_serv_UDP;
         lp->partie = p;
         PORT_UDP++;
+        printf("nb joueur courant : %d\n", p->nb_joueurs_courant);
+       
     }
     else 
     {
@@ -58,13 +60,13 @@ int rajoute_joueur_partie(liste_parties_t *lp, int type) // rajouter un gros loc
         partie_t *p_courante = courante->partie;
         if (p_courante->nb_joueurs_courant < 4)
         {
-            j->id = p_courante->nb_joueurs_courant - 1;
+            j->id = p_courante->nb_joueurs_courant;
             if (!type) 
             {
                 if (p_courante->nb_joueurs_courant < 2) {j->id_equipe = 0;}
                 else {j->id_equipe = 1;}
             }
-            p_courante->joueurs[p_courante->nb_joueurs_courant - 1] = j;
+            p_courante->joueurs[p_courante->nb_joueurs_courant] = j;
             p_courante->nb_joueurs_courant++;
         }
         else
@@ -160,7 +162,7 @@ int client_thread(arg_thread_t *args)
         courante = courante->suivant;
     }
 
-    u_int16_t id = (courante->partie->nb_joueurs_courant - 1) << 1;
+    u_int16_t id = (courante->partie->nb_joueurs_courant) << 1;
     rep_0 |= (u_int16_t)((id & 0x3) << 13);
     rep_0 |= (u_int16_t)((1 & 0x1) << 15);
     rep[0] = htons(rep_0);
@@ -198,22 +200,9 @@ int client_thread(arg_thread_t *args)
 
     int sock_serv_UDP = courante->partie->sock_serv_UDP;
 
-    // fd_set rset;
-    // FD_ZERO(&rset);
-    // FD_SET(sock_serv_UDP, &rset); //pour surveillance en lecture de sock
 
-    // struct timeval timeout;
-    // timeout.tv_sec = 5;
-    // timeout.tv_usec = 0;
-
-    // int result = select(sock_serv_UDP + 1, &rset, NULL, NULL, &timeout);
-    // if (result > 0) {
     if (recvfrom(sock_serv_UDP, buf, sizeof(buf), 0, (struct sockaddr *)&courante->partie->adresse_serv_UDP, &addr_len)<0){ printf("arrrrr\n"); return -1;}
      printf("buf : %s\n", buf);
-    // } else if (result == 0) {
-    //     // Timeout
-    //     printf("Timeout waiting for data\n");
-    // }
 
     // serveur();
 
