@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <math.h>
 #include "bomberwoman.h"
+#include "format.c"
 
 #define SIZE_MESS 1024
 static int n_move = 0;
@@ -82,7 +83,8 @@ int main (int argc, const char *argv[]) {
     u_int16_t codereq = ntohs(reponse_serveur[0]) & 0x1FFF;
     u_int16_t id = (ntohs(reponse_serveur[0]) >> 13) & 0x3;
     u_int16_t eq = (ntohs(reponse_serveur[0]) >> 15) & 0x1;
-    u_int16_t portUDP = ntohs(reponse_serveur[1]); /* numéro de port sur lequel le serveur attend les actions en UDP des joueurs */
+    u_int16_t portUDP = ntohs(reponse_serveur[1]); numéro de port sur lequel le serveur attend les actions en UDP des joueurs 
+*/    
     u_int16_t portMDIFF = ntohs(reponse_serveur[2]); /* numéro de port sur lequel le serveur multidiffusera ses messages aux joueurs */
     printf("codereq: %u\n id: %u\n eq: %u\n portUDP: %u\n portMDIFF: %u\n ", codereq, id, eq, portUDP, portMDIFF); 
    

@@ -177,6 +177,7 @@ int client_thread(arg_thread_t *args)
     for (int i = 0; i < 11; i++) {
         memcpy(&rep[i + 3], adresseMultiDiff.sin6_addr.s6_addr + (i * 2), sizeof(rep[i + 3]));
     }
+    serveur(adresseMultiDiff);
     
    
     int reponse = 0;

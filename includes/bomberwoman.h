@@ -55,6 +55,9 @@ int ncurses(uint16_t *rep_serv, int sock_UDP, struct sockaddr_in6 serv_dest);
 void actions(int a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 servadr_dest);
 u_int16_t header(int codereq, int id, int eq);
 void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]);
+u_int16_t header(int codereq, int id, int eq);
+u_int16_t* tchat_format(int codereq, int id, int eq, int len, char * data);
+
 int ncurses();
 
 int client_thread(arg_thread_t *args);
