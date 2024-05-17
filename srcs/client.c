@@ -100,7 +100,6 @@ int main (int argc, const char *argv[]) {
         return -1;
     }
     servadr_dest.sin6_port = htons(portUDP);
-    //printf("port UDP cote client : %d", ntohs(portUDP));
 
     ncurses(reponse_serveur, sock_UDP, sock, servadr_dest);
     //char buf[25];
