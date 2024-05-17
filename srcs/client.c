@@ -98,12 +98,13 @@ int main (int argc, const char *argv[]) {
         perror("Erreur lors de la conversion de l'adresse IP");
         return -1;
     }
-    servadr_dest.sin6_port = portUDP;
-    //ncurses(reponse_serveur, sock_UDP, servadr_dest);
+    servadr_dest.sin6_port = htons(portUDP);
+    //printf("port UDP cote client : %d", ntohs(portUDP));
 
-    char buf[25];
-    sprintf(buf, "coucou ça fonctionne !");
-    if (sendto(sock_UDP, buf , strlen(buf), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest))< 0) { printf("sendto failed\n");return -1; }
+    ncurses(reponse_serveur, sock_UDP, servadr_dest);
+    //char buf[25];
+    //sprintf(buf, "coucou ça fonctionne !");
+    //if (sendto(sock_UDP, buf , strlen(buf), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest))< 0) { printf("sendto failed\n");return -1; }
 
     close(sock_UDP);
     close(sock);
