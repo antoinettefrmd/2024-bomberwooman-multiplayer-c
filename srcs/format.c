@@ -11,7 +11,7 @@ u_int16_t header(int codereq, int id, int eq) {
     res |= (u_int16_t)((eq & 0x1) << 15); // puis eq sur le bit 15
     return (htons(res)); // le tout est ensuite mis au format big endian
 }
-*/
+
 void move_format(int codereq, int id, int eq, int num, int action) {
     u_int16_t move[2];
     u_int16_t move_1;
@@ -24,7 +24,7 @@ void move_format(int codereq, int id, int eq, int num, int action) {
     move[1] = htons(move_1); // les deux octets sont mis au format big endian
 }
 
-/*
+
 void grille_format(int num, int hauteur, int largeur, int **plateau) {
     u_int16_t grille[3 + (hauteur * largeur) / 2]; // pareil que le tchat, chaque case est codée sur un octet
     u_int16_t grille_2;

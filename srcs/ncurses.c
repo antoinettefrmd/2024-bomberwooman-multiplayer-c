@@ -117,11 +117,9 @@ ACTION control(line* l, int sock_TCP, uint16_t *rep_serv) {
         case KEY_BACKSPACE:
             if (l->cursor > 0) l->cursor--;
             break;
-        case 10: // correspond au bouton entrée
-            messageTchatClient(sock_TCP, rep_serv, tabulation, l->data, strlen(l->data));
-            memset(l->data, 0, sizeof(l->data)); // on vide data 
-        case 9: // correspond à tabulation
-           tabulation = tabulation == 8 ? 7 : 8;
+        case 10:  messageTchatClient(sock_TCP, rep_serv, tabulation, l->data, strlen(l->data)); memset(l->data, 0, sizeof(l->data)); break;
+        case 9:
+           tabulation = tabulation == 8 ? 7 : 8; break;
         default:
             if (prev_c >= ' ' && prev_c <= '~' && l->cursor < TEXT_SIZE)
                 l->data[(l->cursor)++] = prev_c;
@@ -160,7 +158,10 @@ int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 
     line* l = malloc(sizeof(line));
     l->cursor = 0;
     pos* p = malloc(sizeof(pos));
-    p->x = 0; p->y = 0;
+    uint16_t id = (ntohs(rep_serv[0]) >> 13) & 0x3;
+    //printf("%u\n", id);
+    p->x = id % 2 ; p->y = id/2;
+    //printf("x = %d, y = %d\n", p->x, p->y);
 
     // NOTE: All ncurses operations (getch, mvaddch, refresh, etc.) must be done on the same thread.
     initscr(); /* Start curses mode */
@@ -174,6 +175,10 @@ int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 
     init_pair(1, COLOR_YELLOW, COLOR_BLACK); // Define a new color style (text is yellow, background is black)
 
     setup_board(b);
+    p->x *= (b->w - 1);
+    p->y *= (b->h - 1);
+    //printf("x = %d, y = %d\n", p->x, p->y);
+    //exit(0);
     while (true) {
         ACTION a = control(l, sock_TCP, rep_serv);
         if (perform_action(b, p, a, rep_serv, sock_UDP, serv_dest)) break;

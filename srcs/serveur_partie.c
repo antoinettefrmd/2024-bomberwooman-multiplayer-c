@@ -229,7 +229,7 @@ int serveur() {
     }
 
     /* Liaison de la socket à une interface réseau spécifique */
-    int ifindex = if_nametoindex("en0"); /* interface réseau multicast sur ma machine */
+    int ifindex = if_nametoindex("wlo1"); /* interface réseau multicast sur ma machine */
     if (ifindex == 0) {
         perror("Erreur lors de la récupération de l'index de l'interface");
         close(sock);

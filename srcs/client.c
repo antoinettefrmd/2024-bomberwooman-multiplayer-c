@@ -173,7 +173,7 @@ void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]){
     /* abonnement de l'entité au groupe multicast */
     struct ipv6_mreq group;
     memcpy(&group.ipv6mr_multiaddr, &adresseMultiDiff.sin6_addr, sizeof(struct in6_addr));
-    group.ipv6mr_interface = if_nametoindex("en0"); /* interface réseau multicast sur ma machine */
+    group.ipv6mr_interface = if_nametoindex("wlo1"); /* interface réseau multicast sur ma machine */
     
     if(setsockopt(sockUDP, IPPROTO_IPV6, IPV6_JOIN_GROUP, &group, sizeof(group)) < 0){
         perror("setsockopt");
@@ -226,6 +226,12 @@ u_int16_t* tchat_format(int codereq, int id, int eq, int len, char * data) {
 }
 
 void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char data[], int len) {
+    (void)sock_TCP;
+    (void)buf;
+    (void)tabulation;
+    (void)data;
+    (void)len;
+    /*
     
     u_int16_t codereq = ntohs(buf[0]) & 0x1FFF;
     u_int16_t id = (ntohs(buf[0]) >> 13) & 0x3;
@@ -243,12 +249,12 @@ void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char dat
     size_t taille_message = (2 + (len / 2)) * sizeof(u_int16_t);
 
     int mess_len = len;
+    if(send(sock_TCP, &mess_len, sizeof(int),0) < 0){
+        perror("send1");
+        exit(EXIT_FAILURE);
+    }
     while ((size_t)paquets_envoyes < sizeof(taille_message)) {
         
-        if(send(sock_TCP, &mess_len, sizeof(int),0) < 0){
-            perror("send1");
-            exit(EXIT_FAILURE);
-        }
 
         res_send = send(sock_TCP, message, sizeof(taille_message - paquets_envoyes), 0);
        
@@ -260,5 +266,6 @@ void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char dat
         paquets_envoyes += res_send;  
     }
    
-    free(message); 
+    free(message);
+    */
 }

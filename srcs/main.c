@@ -64,6 +64,7 @@ int main() {
             inet_ntop(AF_INET6, &(adrclient.sin_addr), addr_buf, sizeof(addr_buf));
         }
         printf("[*] Connexion établie avec %s:%d\n", inet_ntoa(adrclient.sin_addr), ntohs(adrclient.sin_port));
+        printf("post connexion\n");
 
         args.socket_client = sockclient;
 
@@ -71,12 +72,15 @@ int main() {
         if (pthread_create(&tpthread[nb_thread], NULL, (void *)client_thread,(void *)&args) < 0) {perror("Création thread"); exit(1);}
         nb_thread++;
 
-        int message1;
-        fd_set rset;
-        FD_ZERO(&rset);
-        FD_SET(sock, &rset);
-        select(sock + 1, &rset, NULL, 0, NULL);
-        if (FD_ISSET(sock, &rset)) {
+        //int message1;
+        //fd_set rset;
+        //FD_ZERO(&rset);
+        //FD_SET(sock, &rset);
+        //printf("before select\n");
+        //select(sock + 1, &rset, NULL, 0, NULL);
+        //if (FD_ISSET(sock, &rset)) {
+        /*
+            printf("select\n");
             if(recv(sock, &message1, sizeof(int), 0) < 0)
                 perror("recv");
 
@@ -101,8 +105,8 @@ int main() {
             }
             printf("reception message tchat");
             free(message);
-        }
-
+        //}
+*/
     }
 
     for(int i=0; i<15; i++)
