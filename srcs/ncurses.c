@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "bomberwoman.h"
 
 #define TEXT_SIZE 255
@@ -27,12 +28,30 @@ typedef struct pos {
     int y;
 } pos;
 
+void set_grid(board* b, int x, int y, int v);
+
 void setup_board(board* board) {
     int lines; int columns;
     getmaxyx(stdscr,lines,columns);
     board->h = lines - 2 - 1; // 2 rows reserved for border, 1 row for chat
     board->w = columns - 2; // 2 columns reserved for border
     board->grid = calloc((board->w)*(board->h),sizeof(char));
+
+    int x, y; 
+    // for (x = 0; x < board->w+2; x++) {
+    //     set_grid(board, 0, x, 5); // mur en haut
+    //     set_grid(board, board->h+1, x, 5); // mur en bas
+    // }
+    // for (y = 0; y < board->h+2; y++) {
+    //     set_grid(board, y, 0, 6); // mur à gauche
+    //     set_grid(board, y, board->w+1, 6); // mur à droite
+    // }
+    for (x = 1; x < board->w+1; x++) {    
+        for (y = 1; y < board->h+1; y++) {
+            int r = rand() % 15;
+            if  (r == 1) set_grid(board, x,y,3);
+        }    
+    }
 }
 
 void free_board(board* board) {
@@ -48,10 +67,12 @@ void set_grid(board* b, int x, int y, int v) {
 }
 
 void refresh_game(board* b, line* l) {
+    srand(time(NULL));
+
     // Update grid
     int x,y;
-    for (y = 0; y < b->h; y++) {
-        for (x = 0; x < b->w; x++) {
+    for (y = 0; y < b->h+2; y++) {
+        for (x = 0; x < b->w+2; x++) {
             char c;
             switch (get_grid(b,x,y)) {
                 case 0:
@@ -63,6 +84,9 @@ void refresh_game(board* b, line* l) {
                 case 2:
                     c = 'B';
                     break;
+                case 3 :
+                    c = '/';
+                    break;
                 default:
                     c = '?';
                     break;
@@ -71,13 +95,14 @@ void refresh_game(board* b, line* l) {
         }
     }
     for (x = 0; x < b->w+2; x++) {
-        mvaddch(0, x, '-');
-        mvaddch(b->h+1, x, '-');
+        mvaddch(0, x, '-'); // mur en haut
+        mvaddch(b->h+1, x, '-'); // mur en bas
     }
     for (y = 0; y < b->h+2; y++) {
-        mvaddch(y, 0, '|');
-        mvaddch(y, b->w+1, '|');
+        mvaddch(y, 0, '|'); // mur à gauche
+        mvaddch(y, b->w+1, '|'); // mur à droite
     }
+    
     // Update chat text
     attron(COLOR_PAIR(1)); // Enable custom color 1
     attron(A_BOLD); // Enable bold
@@ -154,9 +179,14 @@ bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, st
             return true;
         default: break;
     }
-    p->x += xd; p->y += yd;
-    p->x = (p->x + b->w)%b->w;
-    p->y = (p->y + b->h)%b->h;
+    if ((get_grid(b, p->x + xd, p->y + yd) == 3)) {
+        actions(5, buf, sock_UDP,serv_dest); set_grid(b,p->x,p->y,5) ; return false;
+    }
+    else {
+        p->x += xd; p->y += yd;
+    }
+    // p->x = (p->x + b->w)%b->w;
+    // p->y = (p->y + b->h)%b->h;
     if (get_grid(b,p->x,p->y) != 2) set_grid(b,p->x,p->y, 1);
     return false;
 }
