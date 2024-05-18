@@ -117,7 +117,10 @@ ACTION control(line* l, int sock_TCP, uint16_t *rep_serv) {
         case KEY_BACKSPACE:
             if (l->cursor > 0) l->cursor--;
             break;
-        case 10:  messageTchatClient(sock_TCP, rep_serv, tabulation, l->data, strlen(l->data)); memset(l->data, 0, sizeof(l->data)); break;
+        case 10:  
+            printf("entrée cliquée\n");
+            messageTchatClient(sock_TCP, rep_serv, tabulation, l->data, strlen(l->data)); 
+            memset(l->data, 0, sizeof(l->data)); break;
         case 9:
            tabulation = tabulation == 8 ? 7 : 8; break;
         default:

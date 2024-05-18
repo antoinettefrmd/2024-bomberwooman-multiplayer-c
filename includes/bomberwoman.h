@@ -12,7 +12,6 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-
 #define PORT_TCP 4444
 
 // Struct joueur
@@ -49,6 +48,7 @@ typedef struct arg_thread {
     liste_parties_t *liste_2v2;
     liste_parties_t *liste_4adv;
     pthread_mutex_t *verrou;
+    fd_set rset;
 } arg_thread_t;
 
 int client(const char *argv[]);
@@ -60,7 +60,9 @@ void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char dat
 
 int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 serv_dest);
 
-
 int client_thread(arg_thread_t *args);
 int serveur();
+
+void handle_tchat_serveur (int sock_TCP, fd_set rset);
+
 #endif

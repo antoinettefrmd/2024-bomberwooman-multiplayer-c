@@ -202,9 +202,10 @@ int client_thread(arg_thread_t *args)
 
     int sock_serv_UDP = courante->partie->sock_serv_UDP;
 
-    while (1) {
-        fd_set rset;
-        FD_ZERO(&rset);
+    while (1) {     
+        fd_set rset = args->rset;
+        //FD_ZERO(&rset);
+        
         FD_SET(sock_serv_UDP, &rset);
         select(sock_serv_UDP + 1, &rset, NULL, 0, NULL);
         if (FD_ISSET(sock_serv_UDP, &rset)) {
@@ -229,7 +230,7 @@ int serveur() {
     }
 
     /* Liaison de la socket à une interface réseau spécifique */
-    int ifindex = if_nametoindex("wlo1"); /* interface réseau multicast sur ma machine */
+    int ifindex = if_nametoindex("eth0"); /* interface réseau multicast sur ma machine */
     if (ifindex == 0) {
         perror("Erreur lors de la récupération de l'index de l'interface");
         close(sock);
