@@ -12,6 +12,7 @@
 
 #define SIZE_MESS 1024
 static int n_move = 0;
+static int launch = 0;
 
 int main (int argc, const char *argv[]) {
 
