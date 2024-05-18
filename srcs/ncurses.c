@@ -31,6 +31,7 @@ typedef struct pos {
 void set_grid(board* b, int x, int y, int v);
 
 void setup_board(board* board) {
+    srand(time(NULL));
     int lines; int columns;
     getmaxyx(stdscr,lines,columns);
     board->h = lines - 2 - 1; // 2 rows reserved for border, 1 row for chat
@@ -39,12 +40,23 @@ void setup_board(board* board) {
 
     int x, y; 
 
-    for (x = 1; x < board->w+1; x++) {    
-        for (y = 1; y < board->h+1; y++) {
-            int r = rand() % 15;
-            if  (r == 1) set_grid(board, x,y,3);
+    for (x = 0; x < board->w; x++) {    
+        for (y = 0; y < board->h; y++) {
+            if ((x%5 == 4) && (y%2 == 1) ) set_grid(board, x, y, 3);
         }    
     }
+    for (x = 0 ; x < board->w; x++) {   
+        if (x > 5 && (rand()*3 == 2)) set_grid(board, x, 0, 4);
+        if (x > 5 && (rand()*3 == 2)) set_grid(board, board->h, 0, 4);
+        for (y = 0 ; y < board->h; y++) {
+            if (rand()%5 == 1) set_grid(board, x, y, 4);
+        }    
+    }
+    for (y = 5 ; y < board->h; y++) {
+        if (rand()*3 == 2) set_grid(board, 0, y, 4);
+        if (rand()*3 == 2) set_grid(board, board->w, y, 4);
+    }
+
 }
 
 void free_board(board* board) {
@@ -60,8 +72,6 @@ void set_grid(board* b, int x, int y, int v) {
 }
 
 void refresh_game(board* b, line* l) {
-    srand(time(NULL));
-
     // Update grid
     int x,y;
     for (y = 0; y < b->h+2; y++) {
@@ -78,7 +88,10 @@ void refresh_game(board* b, line* l) {
                     c = 'B';
                     break;
                 case 3 :
-                    c = '/';
+                    c = 'I';
+                    break;
+                case 4 : 
+                    c = 'D';
                     break;
                 default:
                     c = '?';
@@ -172,14 +185,17 @@ bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, st
             return true;
         default: break;
     }
-    if ((get_grid(b, p->x + xd, p->y + yd) == 3) || p->x + xd < 0 || p->y + yd < 0 || p->x + xd >= b->w || p->y + yd >= b->h) {
+    if ((get_grid(b, p->x + xd, p->y + yd) == 3) 
+    || (get_grid(b, p->x + xd, p->y + yd) == 4) 
+    || p->x + xd < 0 || p->y + yd < 0 
+    || p->x + xd >= b->w || p->y + yd >= b->h) {
         actions(5, buf, sock_UDP,serv_dest); set_grid(b,p->x,p->y,5) ; return false;
     }
     else {
+        set_grid(b, p->x,p->y,0);
         p->x += xd; p->y += yd;
     }
-    // p->x = (p->x + b->w)%b->w;
-    // p->y = (p->y + b->h)%b->h;
+
     if (get_grid(b,p->x,p->y) != 2) set_grid(b,p->x,p->y, 1);
     return false;
 }
