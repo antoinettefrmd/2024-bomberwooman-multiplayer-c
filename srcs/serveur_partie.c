@@ -224,7 +224,7 @@ int client_thread(arg_thread_t *args)
     return 1;
 }
 
-int serveur() {
+int serveur(struct sockaddr_in6 adresseMultiDiff) {
     
     /* déclaration d'une socket UDP IPv6 */
     int sock = socket(PF_INET6, SOCK_DGRAM,0); 
@@ -234,23 +234,26 @@ int serveur() {
     }
 
     /* Liaison de la socket à une interface réseau spécifique */
-    int ifindex = if_nametoindex("eth0"); /* interface réseau multicast sur ma machine */
+    int ifindex = if_nametoindex("eth0");
     if (ifindex == 0) {
         perror("Erreur lors de la récupération de l'index de l'interface");
         close(sock);
         exit(EXIT_FAILURE);
     }
 
+    int ok = 1;
+    if(setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &ok, sizeof(ok)) < 0) {
+        perror("echec de SO_REUSEADDR");
+        close(sock);
+        return 1;
+    }
+    /*
     if(setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) == -1) {
         perror("erreur initialisation de l’interface locale");
         exit(EXIT_FAILURE);
-    }
+    }*/
+    adresseMultiDiff.sin6_scope_id = ifindex;
 
-    /* Liaison de la socket au port */
-    // if (bind(sock, (struct sockaddr *)&addr_server, sizeof(addr_server)) < 0) {
-    //     perror("Erreur lors de la liaison de la socket au port");
-    //     exit(EXIT_FAILURE);
-    // }
     printf("diffusion OK\n");
 
     char message[] = "Message de test";

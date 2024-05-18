@@ -83,12 +83,11 @@ int main (int argc, const char *argv[]) {
     u_int16_t codereq = ntohs(reponse_serveur[0]) & 0x1FFF;
     u_int16_t id = (ntohs(reponse_serveur[0]) >> 13) & 0x3;
     u_int16_t eq = (ntohs(reponse_serveur[0]) >> 15) & 0x1;
-    u_int16_t portUDP = ntohs(reponse_serveur[1]); numéro de port sur lequel le serveur attend les actions en UDP des joueurs 
-*/    
+    u_int16_t portUDP = ntohs(reponse_serveur[1]); /* numéro de port sur lequel le serveur attend les actions en UDP des joueurs */    
     u_int16_t portMDIFF = ntohs(reponse_serveur[2]); /* numéro de port sur lequel le serveur multidiffusera ses messages aux joueurs */
     printf("codereq: %u\n id: %u\n eq: %u\n portUDP: %u\n portMDIFF: %u\n ", codereq, id, eq, portUDP, portMDIFF); 
    
-    // abonnementMultidiff(portMDIFF,reponse_serveur);
+    abonnementMultidiff(portMDIFF,reponse_serveur);
    
     int sock_UDP = socket(PF_INET6, SOCK_DGRAM, 0);
     if (sock_UDP < 0){ perror("socket failure"); }
@@ -102,14 +101,14 @@ int main (int argc, const char *argv[]) {
     }
     servadr_dest.sin6_port = htons(portUDP);
 
-    ncurses(reponse_serveur, sock_UDP, servadr_dest);
+   // ncurses(reponse_serveur, sock_UDP, servadr_dest);
     //char buf[25];
     //sprintf(buf, "coucou ça fonctionne !");
     //if (sendto(sock_UDP, buf , strlen(buf), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest))< 0) { printf("sendto failed\n");return -1; }
 
-    close(sock_UDP);
-    close(sock);
-    return 0;
+   //close(sock_UDP);
+    //close(sock);
+    //return 0;
 }
 
 u_int16_t header(int codereq, int id, int eq) {
@@ -140,7 +139,8 @@ void actions(int a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 servadr_de
     if (sendto(sock_UDP, move, sizeof(move), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest)) < 0) {exit (0);}
 
 }
-   void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]){
+
+void abonnementMultidiff (u_int16_t portMDIFF, u_int16_t reponse_serveur[]){
     
     /* le client doit s'abonner à l'adresseMultiDiff de multidiffusion */
     int sockUDP = socket(AF_INET6, SOCK_DGRAM,0);
@@ -168,7 +168,7 @@ void actions(int a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 servadr_de
     }
     printf("Adresse de multidiffusion client : %s\n", adresse_str);
    
-    /* Lier la socket à toute interface et au port de multidiffusion*/
+    /* Lier la socket à toute interface et au port de multidiffusion */
     struct sockaddr_in6 localAddr;
     memset(&localAddr, 0, sizeof(localAddr));
     localAddr.sin6_family = AF_INET6;
@@ -183,10 +183,11 @@ void actions(int a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 servadr_de
     
     /* abonnement de l'entité au groupe multicast */
     struct ipv6_mreq group;
-    memcpy(&group.ipv6mr_multiaddr, &adresseMultiDiff.sin6_addr, sizeof(struct in6_addr));
+    inet_pton(AF_INET6, adresse_str, &group.ipv6mr_multiaddr);
+  //  memcpy(&group.ipv6mr_multiaddr, &adresseMultiDiff.sin6_addr, sizeof(struct in6_addr));
     group.ipv6mr_interface = if_nametoindex("eth0"); /* interface réseau multicast par défaut */
        
-    if( setsockopt(sockUDP, IPPROTO_IPV6, IPV6_JOIN_GROUP, &group, sizeof(group)) < 0){
+    if (setsockopt(sockUDP, IPPROTO_IPV6, IPV6_JOIN_GROUP, &group, sizeof(group)) < 0){
         perror("setsockopt");
         close(sockUDP);
         exit(EXIT_FAILURE);

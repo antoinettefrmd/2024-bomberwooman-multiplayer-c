@@ -121,7 +121,7 @@ ACTION control(line* l) {
            // messageTchatClient(buf,tabulation,l->data);
             //memset(l->data, 0, sizeof(l->data)); // on vide data 
         case 9: // correspond à tabulation
-           tabulation = tabulation == 8 ? 7 : 8;
+           tabulation = tabulation == 8 ? 7 : 8;break;
         default:
             if (prev_c >= ' ' && prev_c <= '~' && l->cursor < TEXT_SIZE)
                 l->data[(l->cursor)++] = prev_c;
