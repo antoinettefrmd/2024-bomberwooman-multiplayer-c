@@ -213,7 +213,7 @@ int client_thread(arg_thread_t *args)
         }
 
         // serveur();
-        uint16_t action = (ntohs(client_move[1]) >> 13) & 0x3;
+        uint16_t action = (ntohs(client_move[1]) >> 13) & 0x7;
         printf("action : %u\n", action);
     }
     close(sock_client);

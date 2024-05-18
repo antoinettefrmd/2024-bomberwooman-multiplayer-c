@@ -83,8 +83,8 @@ int main (int argc, const char *argv[]) {
     u_int16_t codereq = ntohs(reponse_serveur[0]) & 0x1FFF;
     u_int16_t id = (ntohs(reponse_serveur[0]) >> 13) & 0x3;
     u_int16_t eq = (ntohs(reponse_serveur[0]) >> 15) & 0x1;
-    u_int16_t portUDP = ntohs(reponse_serveur[1]); numéro de port sur lequel le serveur attend les actions en UDP des joueurs 
-*/    
+    u_int16_t portUDP = ntohs(reponse_serveur[1]); 
+    // numéro de port sur lequel le serveur attend les actions en UDP des joueurs 
     u_int16_t portMDIFF = ntohs(reponse_serveur[2]); /* numéro de port sur lequel le serveur multidiffusera ses messages aux joueurs */
     printf("codereq: %u\n id: %u\n eq: %u\n portUDP: %u\n portMDIFF: %u\n ", codereq, id, eq, portUDP, portMDIFF); 
    
@@ -123,19 +123,19 @@ u_int16_t header(int codereq, int id, int eq) {
 }
 
 void actions(int a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 servadr_dest) {
-    //printf("action = %d et codereq = %u\n",a, ntohs(buf[0] & 0xFF00));
-     u_int16_t move[2];
+    // printf("action = %d et codereq = %u\n",a, ntohs(buf[0] & 0xFF00));
+    u_int16_t move[2];
     u_int16_t move_1;
 
     if (ntohs(buf[0] & 0xFF00) == 9)
-        move[0] = header(5, (buf[0] >> 13) & 0x3, (buf[0] >> 15) & 0x1);
+        move[0] = header(5, (buf[0] >> 13) & 0x7, (buf[0] >> 15) & 0x1);
     else
-        move[0] =  header(5, (buf[0] >> 13) & 0x3, 0);        
+        move[0] =  header(5, (buf[0] >> 13) & 0x7, 0);        
 
     move_1 = 0;
     move_1 |= (u_int16_t)((n_move % (int)pow(2, 13)) & 0x1FFF); // le numéro est également codé sur 12 bits
     n_move++;
-    move_1 |= (u_int16_t)((a & 0x3) << 13); // action est placé sur le bit 13
+    move_1 |= (u_int16_t)((a & 0x7) << 13); // action est placé sur le bit 13
     move[1] = htons(move_1); // les deux octets sont mis au format big endian
     if (sendto(sock_UDP, move, sizeof(move), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest)) < 0) {exit (0);}
 

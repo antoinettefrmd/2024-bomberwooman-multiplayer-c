@@ -11,18 +11,18 @@ u_int16_t header(int codereq, int id, int eq) {
     res |= (u_int16_t)((eq & 0x1) << 15); // puis eq sur le bit 15
     return (htons(res)); // le tout est ensuite mis au format big endian
 }
-*/
-void move_format(int codereq, int id, int eq, int num, int action) {
-    u_int16_t move[2];
-    u_int16_t move_1;
+// */
+// void move_format(int codereq, int id, int eq, int num, int action) {
+//     u_int16_t move[2];
+//     u_int16_t move_1;
 
-    move[0] = header(codereq, id, eq); // le header est placé sur les deux premiers octets
+//     move[0] = header(codereq, id, eq); // le header est placé sur les deux premiers octets
 
-    move_1 = 0;
-    move_1 |= (u_int16_t)(num & 0x1FFF); // le numéro est également codé sur 12 bits
-    move_1 |= (u_int16_t)((action & 0x3) << 13); // action est placé sur le bit 13
-    move[1] = htons(move_1); // les deux octets sont mis au format big endian
-}
+//     move_1 = 0;
+//     move_1 |= (u_int16_t)(num & 0x1FFF); // le numéro est également codé sur 12 bits
+//     move_1 |= (u_int16_t)((action & 0x3) << 13); // action est placé sur le bit 13
+//     move[1] = htons(move_1); // les deux octets sont mis au format big endian
+// }
 
 /*
 void grille_format(int num, int hauteur, int largeur, int **plateau) {

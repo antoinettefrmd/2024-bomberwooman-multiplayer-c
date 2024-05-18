@@ -7,9 +7,9 @@
 #include "bomberwoman.h"
 
 #define TEXT_SIZE 255
-static int tabulation = 7; // destiné à tous les joueurs
+// static int tabulation = 7; // destiné à tous les joueurs
 
-typedef enum ACTION { NONE, UP, DOWN, LEFT, RIGHT, QUIT, ENTREE } ACTION;
+typedef enum ACTION { NONE, UP, DOWN, LEFT, RIGHT, BOMB, QUIT, ENTREE } ACTION;
 
 typedef struct board {
     char* grid;
@@ -59,6 +59,9 @@ void refresh_game(board* b, line* l) {
                     break;
                 case 1:
                     c = 'O';
+                    break;
+                case 2:
+                    c = 'B';
                     break;
                 default:
                     c = '?';
@@ -112,6 +115,8 @@ ACTION control(line* l) {
             a = UP; break;
         case KEY_DOWN:
             a = DOWN; break;
+        case ')':
+            a = BOMB; break;
         case '~':
             a = QUIT; break;
         case KEY_BACKSPACE:
@@ -121,7 +126,7 @@ ACTION control(line* l) {
            // messageTchatClient(buf,tabulation,l->data);
             //memset(l->data, 0, sizeof(l->data)); // on vide data 
         case 9: // correspond à tabulation
-           tabulation = tabulation == 8 ? 7 : 8;
+        //    tabulation = tabulation == 8 ? 7 : 8;
         default:
             if (prev_c >= ' ' && prev_c <= '~' && l->cursor < TEXT_SIZE)
                 l->data[(l->cursor)++] = prev_c;
@@ -143,6 +148,8 @@ bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, st
             xd = 0; yd = -1; actions(0, buf, sock_UDP, serv_dest);  break;
         case DOWN:
             xd = 0; yd = 1; actions(2, buf, sock_UDP, serv_dest);  break; 
+        case BOMB :
+            actions(4, buf, sock_UDP,serv_dest); set_grid(b,p->x,p->y,2) ; return false;
         case QUIT:
             return true;
         default: break;
@@ -150,7 +157,7 @@ bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, st
     p->x += xd; p->y += yd;
     p->x = (p->x + b->w)%b->w;
     p->y = (p->y + b->h)%b->h;
-    set_grid(b,p->x,p->y,1);
+    if (get_grid(b,p->x,p->y) != 2) set_grid(b,p->x,p->y, 1);
     return false;
 }
 
