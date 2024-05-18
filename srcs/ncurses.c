@@ -160,20 +160,22 @@ bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, st
             xd = 0; yd = -1; actions(0, buf, sock_UDP, serv_dest);  break;
         case DOWN:
             xd = 0; yd = 1; actions(2, buf, sock_UDP, serv_dest);  break; 
-        case BOMB :
-            explode_bomb(b, p->x, p->y); actions(4, buf, sock_UDP,serv_dest); set_grid(b,p->x,p->y,2) ; return false;
+        case BOMB : 
+            actions(4, buf, sock_UDP,serv_dest); 
+            set_grid(b,p->x,p->y,2) ; 
+            return false;
         case QUIT:
             return true;
         default: break;
     }
-    if ((get_grid(b, p->x + xd, p->y + yd) == 3) 
+    if ((get_grid(b, p->x + xd, p->y + yd) == 3) // si le joueur avance sur un mur ou en dehors du jeu
     || (get_grid(b, p->x + xd, p->y + yd) == 4) 
     || p->x + xd < 0 || p->y + yd < 0 
     || p->x + xd >= b->w || p->y + yd >= b->h) {
         actions(5, buf, sock_UDP,serv_dest); set_grid(b,p->x,p->y,5) ; return false;
     }
     else {
-        set_grid(b, p->x,p->y,0);
+        if(get_grid(b,p->x,p->y) != 2) set_grid(b, p->x,p->y,0);
         p->x += xd; p->y += yd;
     }
 
