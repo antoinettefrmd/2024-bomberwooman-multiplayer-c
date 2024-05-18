@@ -38,14 +38,7 @@ void setup_board(board* board) {
     board->grid = calloc((board->w)*(board->h),sizeof(char));
 
     int x, y; 
-    // for (x = 0; x < board->w+2; x++) {
-    //     set_grid(board, 0, x, 5); // mur en haut
-    //     set_grid(board, board->h+1, x, 5); // mur en bas
-    // }
-    // for (y = 0; y < board->h+2; y++) {
-    //     set_grid(board, y, 0, 6); // mur à gauche
-    //     set_grid(board, y, board->w+1, 6); // mur à droite
-    // }
+
     for (x = 1; x < board->w+1; x++) {    
         for (y = 1; y < board->h+1; y++) {
             int r = rand() % 15;
@@ -179,7 +172,7 @@ bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, st
             return true;
         default: break;
     }
-    if ((get_grid(b, p->x + xd, p->y + yd) == 3)) {
+    if ((get_grid(b, p->x + xd, p->y + yd) == 3) || p->x + xd < 0 || p->y + yd < 0 || p->x + xd >= b->w || p->y + yd >= b->h) {
         actions(5, buf, sock_UDP,serv_dest); set_grid(b,p->x,p->y,5) ; return false;
     }
     else {
