@@ -6,29 +6,10 @@
 #include <string.h>
 #include <time.h>
 #include "bomberwoman.h"
+#include "ncurse.h"
 
-#define TEXT_SIZE 255
 // static int tabulation = 7; // destiné à tous les joueurs
 
-typedef enum ACTION { NONE, UP, DOWN, LEFT, RIGHT, BOMB, QUIT, ENTREE } ACTION;
-
-typedef struct board {
-    char* grid;
-    int w;
-    int h;
-} board;
-
-typedef struct line {
-    char data[TEXT_SIZE];
-    int cursor;
-} line;
-
-typedef struct pos {
-    int x;
-    int y;
-} pos;
-
-void set_grid(board* b, int x, int y, int v);
 
 void setup_board(board* board) {
     srand(time(NULL));
@@ -180,7 +161,7 @@ bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, st
         case DOWN:
             xd = 0; yd = 1; actions(2, buf, sock_UDP, serv_dest);  break; 
         case BOMB :
-            actions(4, buf, sock_UDP,serv_dest); set_grid(b,p->x,p->y,2) ; return false;
+            explode_bomb(b, p->x, p->y); actions(4, buf, sock_UDP,serv_dest); set_grid(b,p->x,p->y,2) ; return false;
         case QUIT:
             return true;
         default: break;

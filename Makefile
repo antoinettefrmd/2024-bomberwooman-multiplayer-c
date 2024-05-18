@@ -29,7 +29,7 @@ WHITE		=	\033[0;97m
  
 SRC_FILES	=	main serveur_partie
 
-CLIENT_FILES =  client ncurses
+CLIENT_FILES =  client ncurses ncurses_utils
 
 
 
