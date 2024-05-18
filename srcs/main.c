@@ -40,6 +40,12 @@ int main() {
     adrsock.sin6_port = htons(1124); 
     adrsock.sin6_addr = in6addr_any; // une variable de type struct in6_addr qui contient l’adresse locale au format IPv6 avec octets déjà dans l’ordre réseau
 
+    int ok = 1;
+    int ra = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &ok, sizeof(ok));
+    if (ra < 0) {
+        perror("Erreur sockopt");
+        exit(EXIT_FAILURE);
+    }
     /* lier la socket à un numéro de port */
     int r = bind(sock, (struct sockaddr *) &adrsock, sizeof(adrsock));
 

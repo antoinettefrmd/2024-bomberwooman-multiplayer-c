@@ -134,9 +134,10 @@ int client_thread(arg_thread_t *args)
     }
 
     u_int16_t rep_0 = 0;
-
-    u_int16_t rep[11];
-    memset(&rep, 0, sizeof(u_int16_t)*4);
+    char adrMdif[16] = {0};
+    memcpy(adrMdif, "ff12::1:2:3", strlen("ff12::1:2:3"));
+    u_int16_t rep[6];
+    memset(&rep, 0, sizeof(rep));
 
 
     liste_parties_t *courante;
@@ -144,13 +145,13 @@ int client_thread(arg_thread_t *args)
     if (req[0] == 2) 
     { 
         rajoute_joueur_partie (p_2v2, 0);
-        rep_0 |= (u_int16_t)(10 & 0x1FFF);
+        rep_0 |= 10 << 3;
         courante = p_2v2;
     }
     else 
     {
         rajoute_joueur_partie(p_4_adv, 1);
-        rep_0 |= (u_int16_t)(9 & 0x1FFF);
+        rep_0 |= 9 << 3;
         courante = p_4_adv;
     }
     pthread_mutex_unlock(args->verrou);
@@ -162,33 +163,27 @@ int client_thread(arg_thread_t *args)
     
     int nb_joueurs = courante->partie->nb_joueurs_courant;
     u_int16_t id = ( nb_joueurs - 1);
-    rep_0 |= (u_int16_t)((id & 0x3) << 13);
-    rep_0 |= (u_int16_t)((courante->partie->joueurs[nb_joueurs-1]->id_equipe & 0x1) << 15);
+    rep_0 |= id << 1;
+    rep_0 |= courante->partie->joueurs[nb_joueurs-1]->id_equipe;
     rep[0] = htons(rep_0);
 
     rep[1] = htons(courante->partie->port);
     rep[2] = htons(PORT_MDIF);
+    
     
     struct sockaddr_in6 adresseMultiDiff;
     memset(&adresseMultiDiff, 0, sizeof(adresseMultiDiff));
     adresseMultiDiff.sin6_family = AF_INET6;
     inet_pton(AF_INET6,"ff12::1:2:3", &adresseMultiDiff.sin6_addr);
     adresseMultiDiff.sin6_port = htons(PORT_MDIF);
-    printf("portMDIFF serveur = %u", PORT_MDIF);
+    printf("portMDIFF serveur = %u\n", PORT_MDIF);
+    PORT_MDIF++;
 
-    // Copiel'adresse IPv6 en segments de 2 octets dans rep
-    for (int i = 0; i < 11 ;++i) {
-        rep[i+3] = (adresseMultiDiff.sin6_addr.s6_addr[i * 2] << 8) | adresseMultiDiff.sin6_addr.s6_addr[i * 2 + 1];
-    }
-
-    serveur(adresseMultiDiff);
-    
-   
     int reponse = 0;
     ssize_t envoi;
     while((size_t)reponse < sizeof(rep)) 
     {
-        envoi = send(sock_client, rep + reponse, sizeof(rep), 0);
+        envoi = send(sock_client, rep + reponse, sizeof(rep) - reponse, 0);
         if (envoi == -1) 
         {
             perror("Erreur lors de l'envoi du message");
@@ -200,6 +195,26 @@ int client_thread(arg_thread_t *args)
         }
         reponse += envoi;
     }
+    
+    reponse = 0;
+    envoi = 0;
+    while((size_t)reponse < sizeof(adrMdif)) 
+    {
+        envoi = send(sock_client, adrMdif + reponse, sizeof(adrMdif)-reponse, 0);
+        if (envoi == -1) 
+        {
+            perror("Erreur lors de l'envoi du message");
+            exit(EXIT_FAILURE);
+        }
+        if (envoi == 0) 
+        {
+            break;
+        }
+        reponse += envoi;
+    }
+
+    serveur(adresseMultiDiff);
+    
 
     //char buf[25];
     uint16_t client_move[2];
@@ -234,12 +249,8 @@ int serveur(struct sockaddr_in6 adresseMultiDiff) {
     }
 
     /* Liaison de la socket à une interface réseau spécifique */
-    int ifindex = if_nametoindex("eth0");
-    if (ifindex == 0) {
-        perror("Erreur lors de la récupération de l'index de l'interface");
-        close(sock);
-        exit(EXIT_FAILURE);
-    }
+    int ifindex = if_nametoindex("wlp0s20f3");
+    adresseMultiDiff.sin6_scope_id = ifindex;
 
     int ok = 1;
     if(setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &ok, sizeof(ok)) < 0) {
@@ -252,7 +263,7 @@ int serveur(struct sockaddr_in6 adresseMultiDiff) {
         perror("erreur initialisation de l’interface locale");
         exit(EXIT_FAILURE);
     }*/
-    adresseMultiDiff.sin6_scope_id = ifindex;
+    // adresseMultiDiff.sin6_scope_id = ifindex;
 
     printf("diffusion OK\n");
 
