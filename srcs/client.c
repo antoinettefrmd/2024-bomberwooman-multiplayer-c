@@ -181,7 +181,7 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif){
     struct ipv6_mreq group;
     inet_pton(AF_INET6, adrMdif, &group.ipv6mr_multiaddr);
   //  memcpy(&group.ipv6mr_multiaddr, &adresseMultiDiff.sin6_addr, sizeof(struct in6_addr));
-    group.ipv6mr_interface = if_nametoindex("wlp0s20f3"); /* interface réseau multicast par défaut */
+    group.ipv6mr_interface = 0; /* interface réseau multicast par défaut */
     
     if (setsockopt(sockMdifClient, IPPROTO_IPV6, IPV6_JOIN_GROUP, &group, sizeof(group)) < 0){
         perror("setsockopt");

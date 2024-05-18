@@ -249,7 +249,7 @@ int serveur(struct sockaddr_in6 adresseMultiDiff) {
     }
 
     /* Liaison de la socket à une interface réseau spécifique */
-    int ifindex = if_nametoindex("wlp0s20f3");
+    int ifindex = 0;
     adresseMultiDiff.sin6_scope_id = ifindex;
 
     int ok = 1;
