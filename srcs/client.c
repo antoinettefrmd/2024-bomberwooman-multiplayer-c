@@ -67,6 +67,7 @@ int main (int argc, const char *argv[]) {
         if (res_send == 0) break;
         paquets_envoyes += res_send;  
     }
+    printf("premier send client fonctionnel\n");
 
     u_int16_t reponse_serveur[6];
     char adrmdif[16] = {0};
@@ -74,7 +75,7 @@ int main (int argc, const char *argv[]) {
          
     /* Attente de la réponse  */
     while ((size_t)octets_recu < sizeof(reponse_serveur)) {
-        recu = recv(sock, reponse_serveur + octets_recu, SIZE_MESS, 0);
+        recu = recv(sock, reponse_serveur + octets_recu, sizeof(reponse_serveur), 0);
         if (recu == -1) 
         {
             perror("Erreur lors de la réception");
@@ -82,16 +83,18 @@ int main (int argc, const char *argv[]) {
         }
         octets_recu += recu;
     }
+    printf("entre deux rev\n");
 
     octets_recu = 0;
     while ((size_t)octets_recu < sizeof(adrmdif)) {
-        recu = recv(sock, adrmdif + octets_recu, SIZE_MESS, 0);
+        recu = recv(sock, adrmdif + octets_recu, sizeof(adrmdif), 0);
         if (recu == -1) 
         {
             perror("Erreur lors de la réception");
             exit(EXIT_FAILURE);
         }
         octets_recu += recu;
+        printf("octets recus = %d\n", octets_recu);
     }
     //printf("Réponse du service : %u\n", ntohs(buf2[0] & 0xFFF));
 
@@ -192,6 +195,7 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif){
     
     char buf[1024];
     ssize_t paquet_recu;
+    size_t octets_recus = 0;
     struct sockaddr_in6 expediteur;
     socklen_t addrlen = sizeof(expediteur);
 

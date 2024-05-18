@@ -62,7 +62,7 @@ int main() {
     /* on récupère l'adresse du client */
     struct sockaddr_in adrclient;
     socklen_t size = sizeof(adrclient);  
-    while(1) {    
+    for (int i = 0; i < 15; i++) {    
         /* pour accepter la demande de connexion d'un client */
         int sockclient = accept(sock, (struct sockaddr *) &adrclient, &size);
         if(sockclient  >= 0) {

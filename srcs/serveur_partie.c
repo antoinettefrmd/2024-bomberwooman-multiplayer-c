@@ -125,7 +125,8 @@ int client_thread(arg_thread_t *args)
             break;
         }
         res_recv += messageRecu;
-    } 
+    }
+    printf("premier recv serveur fonctionnel\n");
 
     if (messageRecu == -1) {
         perror("Erreur lors de la réception");
@@ -155,6 +156,7 @@ int client_thread(arg_thread_t *args)
         courante = p_4_adv;
     }
     pthread_mutex_unlock(args->verrou);
+    printf("post mutex\n");
 
     while(courante->suivant != NULL && courante->suivant->partie != NULL)
     {
@@ -177,7 +179,7 @@ int client_thread(arg_thread_t *args)
     inet_pton(AF_INET6,"ff12::1:2:3", &adresseMultiDiff.sin6_addr);
     adresseMultiDiff.sin6_port = htons(PORT_MDIF);
     printf("portMDIFF serveur = %u\n", PORT_MDIF);
-    PORT_MDIF++;
+    //PORT_MDIF++;
 
     int reponse = 0;
     ssize_t envoi;
@@ -212,6 +214,7 @@ int client_thread(arg_thread_t *args)
         }
         reponse += envoi;
     }
+    printf("post second send serveur\n");
 
     serveur(adresseMultiDiff);
     
