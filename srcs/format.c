@@ -25,6 +25,8 @@ void move_format(int codereq, int id, int eq, int num, int action) {
 }
 
 
+*/
+/*
 void grille_format(int num, int hauteur, int largeur, int **plateau) {
     u_int16_t grille[3 + (hauteur * largeur) / 2]; // pareil que le tchat, chaque case est codée sur un octet
     u_int16_t grille_2;
