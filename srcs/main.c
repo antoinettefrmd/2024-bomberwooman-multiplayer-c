@@ -77,7 +77,6 @@ int main() {
         fd_set rset;
         FD_ZERO(&rset);
         
-        handle_tchat_serveur(sock, rset);
 
         args.rset = rset;
        
@@ -85,6 +84,7 @@ int main() {
         if (pthread_create(&tpthread[nb_thread], NULL, (void *)client_thread,(void *)&args) < 0) {perror("Création thread"); exit(1);}
         nb_thread++;
 
+        handle_tchat_serveur(sock, rset);
         
     }
 
@@ -103,11 +103,11 @@ void handle_tchat_serveur (int sock_TCP, fd_set rset){
     printf("before select\n");
     if(sock_TCP < 0) perror("erreur sock_TCP du serveur\n");
 
-    struct timeval timeout;
-    timeout.tv_sec = 1;
-    timeout.tv_usec = 0;
+    //struct timeval timeout;
+    //timeout.tv_sec = 1;
+    //timeout.tv_usec = 0;
 
-    select(sock_TCP + 1, &rset, NULL, 0, &timeout); 
+    select(sock_TCP + 1, &rset, NULL, 0, NULL); 
     
     if (FD_ISSET(sock_TCP, &rset)) {
 
@@ -124,7 +124,7 @@ void handle_tchat_serveur (int sock_TCP, fd_set rset){
 
         while ((size_t)paquets_envoyes < sizeof(taille_message)){
 
-            res_recv = recv(sock_TCP, message, sizeof(taille_message - paquets_envoyes), 0);
+            res_recv = recv(sock_TCP, message + paquets_envoyes, sizeof(taille_message - paquets_envoyes), 0);
 
             if (res_recv == -1)
             {

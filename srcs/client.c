@@ -12,7 +12,6 @@
 
 #define SIZE_MESS 1024
 static int n_move = 0;
-static int launch = 0;
 
 int main (int argc, const char *argv[]) {
 
@@ -106,7 +105,7 @@ int main (int argc, const char *argv[]) {
     u_int16_t portMDIFF = ntohs(reponse_serveur[2]); /* numéro de port sur lequel le serveur multidiffusera ses messages aux joueurs */
     printf("codereq: %u\n id: %u\n eq: %u\n portUDP: %u\n portMDIFF: %u\n adresseMultiDif : %s\n", codereq, id, eq, portUDP, portMDIFF, adrmdif); 
    
-    abonnementMultidiff(portMDIFF,adrmdif);
+    //abonnementMultidiff(portMDIFF,adrmdif);
    
     int sock_UDP = socket(PF_INET6, SOCK_DGRAM, 0);
     if (sock_UDP < 0){ perror("socket failure"); }
@@ -120,14 +119,14 @@ int main (int argc, const char *argv[]) {
     }
     servadr_dest.sin6_port = htons(portUDP);
 
-    // ncurses(reponse_serveur, sock_UDP, sock, servadr_dest);
-    //char buf[25];
-    //sprintf(buf, "coucou ça fonctionne !");
-    //if (sendto(sock_UDP, buf , strlen(buf), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest))< 0) { printf("sendto failed\n");return -1; }
+     ncurses(reponse_serveur, sock_UDP, sock, servadr_dest);
+    char buf[25];
+    sprintf(buf, "coucou ça fonctionne !");
+    if (sendto(sock_UDP, buf , strlen(buf), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest))< 0) { printf("sendto failed\n");return -1; }
 
-   //close(sock_UDP);
-    //close(sock);
-    //return 0;
+   close(sock_UDP);
+    close(sock);
+    return 0;
 }
 
 u_int16_t header(int codereq, int id, int eq) {
@@ -258,48 +257,39 @@ void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char dat
     (void)data;
     (void)len;
     
-    // u_int16_t codereq = ntohs(buf[0]) & 0x1FFF;
-    // u_int16_t id = (ntohs(buf[0]) >> 13) & 0x3;
-    // u_int16_t eq = (ntohs(buf[0]) >> 15) & 0x1;
-    // printf("message: %s\n",data);
+    u_int16_t codereq = ntohs(buf[0]) & 0x1FFF;
+    u_int16_t id = (ntohs(buf[0]) >> 13) & 0x3;
+    u_int16_t eq = (ntohs(buf[0]) >> 15) & 0x1;
+    printf("message: %s\n",data);
 
-    // if (codereq == 9) { // si on est en mode 4 joueurs tabulation est forcément égal à 7
-    //    tabulation = 7;
-    // }
+    if (codereq == 9) { // si on est en mode 4 joueurs tabulation est forcément égal à 7
+       tabulation = 7;
+    }
     
-    // u_int16_t *message = tchat_format(tabulation, id, eq, len, data);
+    u_int16_t *message = tchat_format(tabulation, id, eq, len, data);
     
-    // int paquets_envoyes = 0; 
-    // int res_send;
-    // size_t taille_message = (2 + (len / 2)) * sizeof(u_int16_t);
+    int paquets_envoyes = 0; 
+    int res_send;
+    size_t taille_message = (2 + (len / 2)) * sizeof(u_int16_t);
 
-    // int mess_len = len;
-    // if (send(sock_TCP, &mess_len, sizeof(int), MSG_NOSIGNAL | MSG_DONTWAIT) < 0){
-    //     perror("send1");
-    //     exit(EXIT_FAILURE);
-    // }
-    // while ((size_t)paquets_envoyes < sizeof(taille_message)) {
+    int mess_len = len;
+    if (send(sock_TCP, &mess_len, sizeof(int), MSG_NOSIGNAL | MSG_DONTWAIT) < 0){
+        perror("send1");
+        exit(EXIT_FAILURE);
+    }
+    while ((size_t)paquets_envoyes < sizeof(taille_message)) {
 
-    //     res_send = send(sock_TCP, message, sizeof(taille_message - paquets_envoyes), 0);
+        res_send = send(sock_TCP, message, sizeof(taille_message - paquets_envoyes), 0);
        
-    //    if (res_send == -1) {
-    //         perror("Erreur lors de l'envoi du message");
-    //         exit(EXIT_FAILURE);
-    //     }
-    //     if (res_send == 0) break;
-    //     paquets_envoyes += res_send;  
-    // }
+       if (res_send == -1) {
+            perror("Erreur lors de l'envoi du message");
+            exit(EXIT_FAILURE);
+        }
+        if (res_send == 0) break;
+        paquets_envoyes += res_send;  
+    }
 
-    // printf("envoie tchat OK\n");
+    printf("envoie tchat OK\n");
    
-    // free(message);
-    //     //printf("octets recus multidiff = %ld\n", octets_recus);
-    //     // if (paquet_recu == 0) {
-    //     //     printf("La connexion a été fermée par le serveur.\n");
-    //     //     close(sockMdifClient);
-    //     //     break; // Sortie de la boucle si le serveur ferme la connexion.
-    //     // }
-    //     printf("Message reçu du serveur: %.*s\n", (int)paquet_recu, buf + octets_recus);
-    //     octets_recus += paquet_recu;
-    // }
+    free(message);
 }
