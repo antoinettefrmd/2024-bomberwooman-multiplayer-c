@@ -56,7 +56,7 @@ typedef struct arg_thread {
 
 int client(const char *argv[]);
 void actions(int a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 servadr_dest);
-void abonnementMultidiff (u_int16_t portMDIFF, char *adrMdif);
+void abonnementMultidiff (u_int16_t portMDIFF, char *adrMdif, int sock_TCP);
 u_int16_t header(int codereq, int id, int eq);
 u_int16_t* tchat_format(int codereq, int id, int eq, int len, char * data);
 void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char data[], int len);

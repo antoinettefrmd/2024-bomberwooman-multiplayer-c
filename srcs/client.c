@@ -105,8 +105,8 @@ int main (int argc, const char *argv[]) {
     u_int16_t portMDIFF = ntohs(reponse_serveur[2]); /* numéro de port sur lequel le serveur multidiffusera ses messages aux joueurs */
     printf("codereq: %u\n id: %u\n eq: %u\n portUDP: %u\n portMDIFF: %u\n adresseMultiDif : %s\n", codereq, id, eq, portUDP, portMDIFF, adrmdif); 
    
-    abonnementMultidiff(portMDIFF,adrmdif);
-   
+    abonnementMultidiff(portMDIFF,adrmdif, sock);
+    
     int sock_UDP = socket(PF_INET6, SOCK_DGRAM, 0);
     if (sock_UDP < 0){ perror("socket failure"); }
 
@@ -158,7 +158,7 @@ void actions(int a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 servadr_de
 
 }
 
-void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif){
+void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP){
 
     /* le client doit s'abonner à l'adresseMultiDiff de multidiffusion */
     int sockMdifClient = socket(AF_INET6, SOCK_DGRAM,0);
@@ -201,8 +201,25 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif){
         exit(EXIT_FAILURE);
     }
     printf("abonnement OK\n");
+   
+    int paquets_envoyes = 0;
+    int res_send = 0;
+    char ready[6];
+    strcpy(ready, "ready");
+    printf("Envoi du message : %s\n", ready);
     
-   char buf[SIZE_MESS];
+    while ((size_t)paquets_envoyes < sizeof(ready)) {
+        res_send = send(sock_TCP, ready, sizeof(ready), 0);
+        if (res_send == -1) {
+            perror("Erreur lors de l'envoi du message");
+            exit(EXIT_FAILURE);
+        }
+        if (res_send == 0) break;
+        paquets_envoyes += res_send;  
+    }
+    printf("Envoie du message 'ready' OK\n");
+    
+    char buf[SIZE_MESS];
     ssize_t paquet_recu;
     size_t octets_recus = 0;
 

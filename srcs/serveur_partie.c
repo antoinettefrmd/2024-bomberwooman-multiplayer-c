@@ -12,6 +12,7 @@
 #include <sys/select.h>
 #include "bomberwoman.h"
 
+#define SIZE_MESS 1024
 #define PORT 12121 /* quel port utiliser ?*/
 
 static int PORT_UDP = 1234;
@@ -244,9 +245,26 @@ int client_thread(arg_thread_t *args)
         reponse += envoi;
     }
     printf("post second send serveur\n");
-
-    serveur(courante->partie);
     
+    printf("attente message ready du joueur\n");
+    messageRecu = 0;
+    res_recv = 0;
+    char buf[6];
+    memset(buf,0,sizeof(buf));
+
+    while ((size_t)res_recv < sizeof(buf)) {
+        messageRecu = recv(sock_client, buf+res_recv, sizeof(buf), 0);
+        if (messageRecu < 0) {
+            perror("Erreur lors de la réception");
+            exit(EXIT_FAILURE);
+        }
+        res_recv += messageRecu;
+    }
+
+    if (strcmp("ready", buf) == 0) {
+        printf("Le joueur est prêt à jouer ! %s\n", buf);
+        serveur(courante->partie);
+    } 
 
     //char buf[25];
     uint16_t client_move[2];
@@ -275,7 +293,6 @@ int client_thread(arg_thread_t *args)
 int serveur(partie_t *p) {
 
     printf("diffusion OK\n");
-    sleep(1);
     if (p->nb_joueurs_courant < 4) 
     {
         char message[1024] = {0};
