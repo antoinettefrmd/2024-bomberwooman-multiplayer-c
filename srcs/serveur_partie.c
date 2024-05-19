@@ -271,11 +271,15 @@ int serveur(struct sockaddr_in6 adresseMultiDiff) {
     printf("diffusion OK\n");
 
     char message[] = "Message de test";
-    ssize_t tailleEnvoie = sendto(sock, message, strlen(message), 0, (struct sockaddr *)&adresseMultiDiff, sizeof(adresseMultiDiff));
-    if (tailleEnvoie < 0) {
-        perror("Erreur lors de l'envoi du message");
-        close(sock);
-        exit(EXIT_FAILURE);
+    int envoyes = 0;
+    while ((size_t)envoyes < strlen(message)) {
+        ssize_t tailleEnvoie = sendto(sock, message + envoyes, strlen(message) - envoyes, 0, (struct sockaddr *)&adresseMultiDiff, sizeof(adresseMultiDiff));
+        if (tailleEnvoie < 0) {
+            perror("Erreur lors de l'envoi du message");
+            close(sock);
+            exit(EXIT_FAILURE);
+        }
+        envoyes += tailleEnvoie;
     }
 
     printf("Envoie OK\n");

@@ -193,21 +193,28 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif){
     }
     printf("abonnement OK\n");
     
-    char buf[1024];
+   char buf[SIZE_MESS];
     ssize_t paquet_recu;
     size_t octets_recus = 0;
-    struct sockaddr_in6 expediteur;
-    socklen_t addrlen = sizeof(expediteur);
+
+    memset(buf, 0, SIZE_MESS);
 
     /* Lecture des messages multicast diffusés par le serveur */
-    while (1){    
-        paquet_recu = recvfrom(sockMdifClient, buf, sizeof(buf),0,(struct sockaddr *)&expediteur, &addrlen);
-        if (paquet_recu < 0){
+    while (octets_recus < SIZE_MESS) {    
+        paquet_recu = read(sockMdifClient, buf + octets_recus, SIZE_MESS - octets_recus);
+        if (paquet_recu < 0) {
             perror("Erreur lors de la réception du message");
             close(sockMdifClient);
+            exit(EXIT_FAILURE); // Sortie en cas d'erreur de réception.
         }
-        printf("Message reçu du serveur: %.*s\n", (int)paquet_recu, buf);
+        //printf("octets recus multidiff = %ld\n", octets_recus);
+        // if (paquet_recu == 0) {
+        //     printf("La connexion a été fermée par le serveur.\n");
+        //     close(sockMdifClient);
+        //     break; // Sortie de la boucle si le serveur ferme la connexion.
+        // }
+        printf("Message reçu du serveur: %.*s\n", (int)paquet_recu, buf + octets_recus);
+        octets_recus += paquet_recu;
     }
-
     close(sockMdifClient);
 }
