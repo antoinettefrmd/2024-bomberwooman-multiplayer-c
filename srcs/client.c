@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <math.h>
 #include "bomberwoman.h"
+#include "ncurse.h"
 #include "format.c"
 
 #define SIZE_MESS 1024
@@ -221,26 +222,46 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif){
     // --------------------------------------------------------------------------------------------------
     uint16_t code[3];
 
-    paquet_recu = read(sockMdifClient, code + octets_recus, 6 - octets_recus);
+    paquet_recu = read(sockMdifClient, code, sizeof(code));
     if (paquet_recu < 0) {
         perror("Erreur lors de la réception du message");
         close(sockMdifClient);
         exit(EXIT_FAILURE); // Sortie en cas d'erreur de réception.
     }
 
-    uint16_t hauteur = code[2] & 0xFF;
-    uint16_t largeur = (code[2] & 0xFF) >> 8;
-    char grille[largeur*hauteur];
+    int hauteur = code[2] >> 8;
+    int largeur = code[2] & 0xFF;
+    // printf("largeur : %d ; hauteur : %d \n", largeur, hauteur);
+
+    u_int16_t grille[largeur*hauteur];
     octets_recus = 0;
 
-    paquet_recu = read(sockMdifClient, grille + octets_recus, largeur*hauteur - octets_recus);
+    paquet_recu = read(sockMdifClient, grille, largeur*hauteur);
     if (paquet_recu < 0) {
         perror("Erreur lors de la réception du message");
         close(sockMdifClient);
         exit(EXIT_FAILURE); // Sortie en cas d'erreur de réception.
     }
 
-    printf("largeur : %d ; hauteur : %d ; grille : %s\n", largeur, hauteur, grille);
+    char * grid = malloc(largeur *hauteur);
+
+    for (int i = 0 ; i < hauteur ; i++)
+    {
+        for(int j = 0 ; j < largeur ; j++)
+        {
+            if (j%2 == 0)  grid[i*largeur+j] = (grille[i] >> 8);
+            else grid[i*largeur+j] = (grille[i] & 0xFF);
+        }
+    }
+    board *b = malloc(sizeof(board));
+    memset(b,0,sizeof(board));
+    b->h = hauteur;
+    b->w = largeur;
+    b->grid = grid;
+    
+
+    printf("largeur : %d ; hauteur : %d ; grille : %s\n", largeur, hauteur, grid);
+
 
     close(sockMdifClient);
 }

@@ -198,7 +198,6 @@ int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 
     //printf("x = %d, y = %d\n", p->x, p->y);
 
     // NOTE: All ncurses operations (getch, mvaddch, refresh, etc.) must be done on the same thread.
-    initscr(); /* Start curses mode */
     raw(); /* Disable line buffering */
     intrflush(stdscr, FALSE); /* No need to flush when intr key is pressed */
     keypad(stdscr, TRUE); /* Required in order to get events from keyboard */
@@ -222,7 +221,6 @@ int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 
     free_board(b);
 
     curs_set(1); // Set the cursor to visible again
-    endwin(); /* End curses mode */
 
     free(p); free(l); free(b);
 

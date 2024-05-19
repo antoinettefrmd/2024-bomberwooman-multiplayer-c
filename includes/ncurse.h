@@ -35,4 +35,6 @@ void *explode_bomb(arg_thread_bomb *args);
 void set_grid(board* b, int x, int y, int v);
 int get_grid(board* b, int x, int y) ;
 void setup_board(board* board);
+void print_board(board* b);
+
 #endif
