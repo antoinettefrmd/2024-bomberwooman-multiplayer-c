@@ -149,6 +149,9 @@ ACTION control(line* l) {
 }
 
 bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 serv_dest) {
+    pthread_t thread_bomb;
+    arg_thread_bomb *args;
+
     int xd = 0;
     int yd = 0;
     switch (a) {
@@ -161,6 +164,22 @@ bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, st
         case DOWN:
             xd = 0; yd = 1; actions(2, buf, sock_UDP, serv_dest);  break; 
         case BOMB : 
+            args = malloc(sizeof(arg_thread_bomb));  // Allocation dynamique
+            if (!args) {
+                perror("Allocation dynamique échouée");
+                exit(EXIT_FAILURE);
+            }
+            memset(args, 0, sizeof(arg_thread_bomb));
+            args->x = p->x;
+            args->y = p->y;
+            args->b = b;
+            // printf("x : %d ; y : %d\n", args->x, args->y);
+            if (pthread_create(&thread_bomb, NULL,(void *)explode_bomb, (void *)args) < 0) {
+                perror("Création thread");
+                free(args->b);
+                free(args);
+                exit(EXIT_FAILURE);
+            }
             actions(4, buf, sock_UDP,serv_dest); 
             set_grid(b,p->x,p->y,2) ; 
             return false;
