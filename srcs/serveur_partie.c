@@ -177,7 +177,7 @@ int client_thread(arg_thread_t *args)
     for (int i = 0; i < 11; i++) {
         memcpy(&rep[i + 3], adresseMultiDiff.sin6_addr.s6_addr + (i * 2), sizeof(rep[i + 3]));
     }
-    serveur(adresseMultiDiff);
+    serveur();
     
    
     int reponse = 0;
@@ -230,7 +230,7 @@ int serveur() {
     }
 
     /* Liaison de la socket à une interface réseau spécifique */
-    int ifindex = if_nametoindex("wlp0s20f3"); /* interface réseau multicast sur ma machine */
+    int ifindex = if_nametoindex("en0"); /* interface réseau multicast sur ma machine */
     if (ifindex == 0) {
         perror("Erreur lors de la récupération de l'index de l'interface");
         close(sock);
