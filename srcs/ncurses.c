@@ -18,7 +18,6 @@ void setup_board(board* board) {
     board->h = lines - 2 - 1; // 2 rows reserved for border, 1 row for chat
     board->w = columns - 2; // 2 columns reserved for border
     board->grid = calloc((board->w)*(board->h),sizeof(char));
-
     int x, y; 
 
     for (x = 0; x < board->w; x++) {    
@@ -135,7 +134,6 @@ ACTION control(line* l, int sock_TCP, uint16_t *rep_serv) {
             if (l->cursor > 0) l->cursor--;
             break;
         case 10:  
-            printf("entrée cliquée\n");
             messageTchatClient(sock_TCP, rep_serv, tabulation, l->data, strlen(l->data)); 
             memset(l->data, 0, sizeof(l->data)); break;
         case 9:
