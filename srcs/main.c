@@ -70,22 +70,15 @@ int main() {
             inet_ntop(AF_INET6, &(adrclient.sin_addr), addr_buf, sizeof(addr_buf));
         }
         printf("[*] Connexion établie avec %s:%d\n", inet_ntoa(adrclient.sin_addr), ntohs(adrclient.sin_port));
-        printf("post connexion\n");
 
         args.socket_client = sockclient;
         
-        fd_set rset;
-        FD_ZERO(&rset);
-        
-        handle_tchat_serveur(sock, rset);
-
-        args.rset = rset;
+        //handle_tchat_serveur(sock);
        
         // Chaque client va s'éxecuter dans un thread
         if (pthread_create(&tpthread[nb_thread], NULL, (void *)client_thread,(void *)&args) < 0) {perror("Création thread"); exit(1);}
         nb_thread++;
 
-        
     }
 
     for(int i=0; i<15; i++)
@@ -94,51 +87,3 @@ int main() {
     close(sock);
     return 0;
 }
-
-void handle_tchat_serveur (int sock_TCP, fd_set rset){
-    printf("handle tchat serveur\n");
-
-    int message1;
-    FD_SET(sock_TCP, &rset);
-    printf("before select\n");
-    if(sock_TCP < 0) perror("erreur sock_TCP du serveur\n");
-
-    struct timeval timeout;
-    timeout.tv_sec = 1;
-    timeout.tv_usec = 0;
-
-    select(sock_TCP + 1, &rset, NULL, 0, &timeout); 
-    
-    if (FD_ISSET(sock_TCP, &rset)) {
-
-        if (recv(sock_TCP, &message1, sizeof(int), 0) < 0)
-            perror("recv");
-
-       // printf("len = %d", message1);
-        int len = message1;
-
-        int paquets_envoyes = 0;
-        int res_recv;
-        size_t taille_message = (2 + (len / 2)) * sizeof(u_int16_t);
-        u_int16_t *message = malloc((2 + (len / 2)) * sizeof(u_int16_t));
-
-        while ((size_t)paquets_envoyes < sizeof(taille_message)){
-
-            res_recv = recv(sock_TCP, message, sizeof(taille_message - paquets_envoyes), 0);
-
-            if (res_recv == -1)
-            {
-                perror("Erreur lors de la reception du message TCP");
-                exit(EXIT_FAILURE);
-            }
-            if (res_recv == 0)
-                break;
-            paquets_envoyes += res_recv;
-        }
-        printf("reception message tchat");
-        free(message);
-    }
-}
-
-
-// diviser les deux fonctions en sous-fonctions, par exemple pour recevoir ou envoyer un message

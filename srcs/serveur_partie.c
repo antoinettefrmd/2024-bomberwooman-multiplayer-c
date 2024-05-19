@@ -13,6 +13,7 @@
 #include "bomberwoman.h"
 #include "ncurse.h"
 
+#define SIZE_MESS 1024
 #define PORT 12121 /* quel port utiliser ?*/
 
 static int PORT_UDP = 1234;
@@ -249,9 +250,27 @@ int client_thread(arg_thread_t *args)
         reponse += envoi;
     }
     printf("post second send serveur\n");
-
-    serveur(courante->partie);
     
+    messageRecu = 0;
+    res_recv = 0;
+    char buf[6];
+    memset(buf,0,sizeof(buf));
+
+    while ((size_t)res_recv < sizeof(buf)) {
+        messageRecu = recv(sock_client, buf+res_recv, sizeof(buf), 0);
+        if (messageRecu < 0) {
+            perror("Erreur lors de la réception");
+            exit(EXIT_FAILURE);
+        }
+        res_recv += messageRecu;
+    }
+
+    if (strcmp("ready", buf) == 0) {
+        printf("%s ! Le joueur est prêt à jouer\n", buf);
+        serveur(courante->partie);
+    } 
+    
+    handle_tchat_serveur(args->socket_client);
 
     //char buf[25];
     uint16_t client_move[2];
@@ -260,8 +279,8 @@ int client_thread(arg_thread_t *args)
     int sock_serv_UDP = courante->partie->sock_serv_UDP;
 
     while (1) {     
-        fd_set rset = args->rset;
-        //FD_ZERO(&rset);
+        fd_set rset;
+        FD_ZERO(&rset);
         
         FD_SET(sock_serv_UDP, &rset);
         select(sock_serv_UDP + 1, &rset, NULL, 0, NULL);
@@ -280,7 +299,6 @@ int client_thread(arg_thread_t *args)
 int serveur(partie_t *p) {
 
     printf("diffusion OK\n");
-    sleep(1);
     if (p->nb_joueurs_courant < 4) 
     {
         char message[1024] = {0};
@@ -298,11 +316,11 @@ int serveur(partie_t *p) {
     }
     else
     {
-        char message[1024] = {0};
-        sprintf(message, "La partie peut commencer !");
+        char message2[1024] = {0};
+        sprintf(message2, "La partie peut commencer !");
         int envoyes = 0;
-        while ((size_t)envoyes < strlen(message)) {
-            ssize_t tailleEnvoie = sendto(p->sock_serv_MDIF, message + envoyes, strlen(message) - envoyes, 0, (struct sockaddr *)&p->adresse_serv_MDIF, sizeof(p->adresse_serv_MDIF));
+        while ((size_t)envoyes < strlen(message2)) {
+            ssize_t tailleEnvoie = sendto(p->sock_serv_MDIF, message2 + envoyes, strlen(message2) - envoyes, 0, (struct sockaddr *)&p->adresse_serv_MDIF, sizeof(p->adresse_serv_MDIF));
             if (tailleEnvoie < 0) {
                 perror("Erreur lors de l'envoi du message");
                 close(p->sock_serv_MDIF);
@@ -447,4 +465,63 @@ u_int16_t *grille_format(int num, int hauteur, int largeur, char *plateau) {
         }
     }
     return grille;
+}
+void handle_tchat_serveur (int sock_TCP){
+
+    fd_set rset;
+    FD_ZERO(&rset);
+    FD_SET(sock_TCP, &rset);
+
+    struct timeval timeout;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0; 
+
+    int ready = select(sock_TCP + 1, &rset, NULL, 0, &timeout);
+    if (ready < 0) {
+        perror("select error");
+        return;
+    }
+    int len_recu;
+    int recu = 0;
+    int octet_recu = 0;
+
+    while ((size_t)octet_recu < sizeof(5))
+    {
+        recu = recv(sock_TCP, &len_recu, sizeof(len_recu), 0);
+        if (recu < 0){
+            perror("recv len failed");
+            exit(EXIT_FAILURE);
+        }
+        octet_recu += recu;
+    }
+
+    printf("Longueur du message reçue : %d\n", len_recu);
+
+    u_int16_t *message = malloc(len_recu);
+    if (!message) {
+        perror("malloc failed");
+        return;
+    }
+    
+    int taille_message = ((len_recu / 2) + 2) * sizeof(u_int16_t);
+     printf("taille : %d\n",taille_message);
+    int paquets_recu = 0;
+    int res_recv;
+    while (paquets_recu < taille_message) {
+
+        res_recv = recv(sock_TCP, message + paquets_recu, taille_message - paquets_recu, 0);
+
+        if (res_recv == -1){
+            perror("Erreur lors de la reception du message TCP");
+            free(message);
+            exit(EXIT_FAILURE);
+        }
+        if (res_recv == 0) break;
+
+        paquets_recu += res_recv;
+    }
+
+    printf("Reception tchat %c\n", (char)(message[1] & 0xFF));
+
+    free(message);
 }

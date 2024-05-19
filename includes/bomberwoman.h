@@ -53,12 +53,11 @@ typedef struct arg_thread {
     liste_parties_t *liste_2v2;
     liste_parties_t *liste_4adv;
     pthread_mutex_t *verrou;
-    fd_set rset;
 } arg_thread_t;
 
 int client(const char *argv[]);
 void actions(int a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 servadr_dest);
-void abonnementMultidiff (u_int16_t portMDIFF, char *adrMdif);
+void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP,int sock_UDP, uint16_t *rep_serv, struct sockaddr_in6 serv_dest);
 u_int16_t header(int codereq, int id, int eq);
 u_int16_t* tchat_format(int codereq, int id, int eq, int len, char * data);
 void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char data[], int len);
@@ -68,7 +67,7 @@ u_int16_t *grille_format(int num, int hauteur, int largeur, char *plateau);
 
 int client_thread(arg_thread_t *args);
 
-void handle_tchat_serveur (int sock_TCP, fd_set rset);
+void handle_tchat_serveur (int sock_TCP);
 
 int serveur(partie_t *p);
 void create_sockaddr_mdif(partie_t *p, int port_MDIF);
