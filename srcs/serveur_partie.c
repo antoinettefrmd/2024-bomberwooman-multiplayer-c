@@ -246,7 +246,6 @@ int client_thread(arg_thread_t *args)
     }
     printf("post second send serveur\n");
     
-    printf("attente message ready du joueur\n");
     messageRecu = 0;
     res_recv = 0;
     char buf[6];
@@ -262,7 +261,7 @@ int client_thread(arg_thread_t *args)
     }
 
     if (strcmp("ready", buf) == 0) {
-        printf("Le joueur est prêt à jouer ! %s\n", buf);
+        printf("%s ! Le joueur est prêt à jouer\n", buf);
         serveur(courante->partie);
     } 
 
@@ -310,11 +309,11 @@ int serveur(partie_t *p) {
     }
     else
     {
-        char message[1024] = {0};
-        sprintf(message, "La partie peut commencer !");
+        char message2[1024] = {0};
+        sprintf(message2, "La partie peut commencer !");
         int envoyes = 0;
-        while ((size_t)envoyes < strlen(message)) {
-            ssize_t tailleEnvoie = sendto(p->sock_serv_MDIF, message + envoyes, strlen(message) - envoyes, 0, (struct sockaddr *)&p->adresse_serv_MDIF, sizeof(p->adresse_serv_MDIF));
+        while ((size_t)envoyes < strlen(message2)) {
+            ssize_t tailleEnvoie = sendto(p->sock_serv_MDIF, message2 + envoyes, strlen(message2) - envoyes, 0, (struct sockaddr *)&p->adresse_serv_MDIF, sizeof(p->adresse_serv_MDIF));
             if (tailleEnvoie < 0) {
                 perror("Erreur lors de l'envoi du message");
                 close(p->sock_serv_MDIF);

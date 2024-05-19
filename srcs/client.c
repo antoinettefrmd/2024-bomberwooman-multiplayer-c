@@ -105,8 +105,6 @@ int main (int argc, const char *argv[]) {
     u_int16_t portMDIFF = ntohs(reponse_serveur[2]); /* numéro de port sur lequel le serveur multidiffusera ses messages aux joueurs */
     printf("codereq: %u\n id: %u\n eq: %u\n portUDP: %u\n portMDIFF: %u\n adresseMultiDif : %s\n", codereq, id, eq, portUDP, portMDIFF, adrmdif); 
    
-    abonnementMultidiff(portMDIFF,adrmdif, sock);
-    
     int sock_UDP = socket(PF_INET6, SOCK_DGRAM, 0);
     if (sock_UDP < 0){ perror("socket failure"); }
 
@@ -119,7 +117,8 @@ int main (int argc, const char *argv[]) {
     }
     servadr_dest.sin6_port = htons(portUDP);
 
-    // ncurses(reponse_serveur, sock_UDP, sock, servadr_dest);
+    abonnementMultidiff(portMDIFF, adrmdif, sock, sock_UDP, reponse_serveur, servadr_dest);
+
     //char buf[25];
     //sprintf(buf, "coucou ça fonctionne !");
     //if (sendto(sock_UDP, buf , strlen(buf), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest))< 0) { printf("sendto failed\n");return -1; }
@@ -158,7 +157,7 @@ void actions(int a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 servadr_de
 
 }
 
-void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP){
+void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP,int sock_UDP, uint16_t *rep_serv, struct sockaddr_in6 serv_dest){
 
     /* le client doit s'abonner à l'adresseMultiDiff de multidiffusion */
     int sockMdifClient = socket(AF_INET6, SOCK_DGRAM,0);
@@ -205,9 +204,7 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP){
     int paquets_envoyes = 0;
     int res_send = 0;
     char ready[6];
-    strcpy(ready, "ready");
-    printf("Envoi du message : %s\n", ready);
-    
+    strcpy(ready, "ready");    
     while ((size_t)paquets_envoyes < sizeof(ready)) {
         res_send = send(sock_TCP, ready, sizeof(ready), 0);
         if (res_send == -1) {
@@ -216,9 +213,7 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP){
         }
         if (res_send == 0) break;
         paquets_envoyes += res_send;  
-    }
-    printf("Envoie du message 'ready' OK\n");
-    
+    }    
     char buf[SIZE_MESS];
     ssize_t paquet_recu;
     size_t octets_recus = 0;
@@ -234,12 +229,15 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP){
             exit(EXIT_FAILURE); // Sortie en cas d'erreur de réception.
         }
 
-        printf("Message reçu du serveur: %.*s\n", (int)paquet_recu, buf);
+        printf("Message reçu du serveur: %s\n",buf);
+        if(strcmp(buf,"La partie peut commencer !") == 0 || strcmp(buf,"La partie peut commencer !s") == 0){
+            ncurses(rep_serv, sock_UDP, sock_TCP, serv_dest);
+        }
     }
     close(sockMdifClient);
 }
 
-/* méthode formatage d'un message du tchat*/
+/* méthode formatage d'un message du tchat */
 u_int16_t* tchat_format(int codereq, int id, int eq, int len, char * data) {
     
     u_int16_t *tchat = malloc((2 + (len / 2)) * sizeof(u_int16_t));
