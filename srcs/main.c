@@ -40,6 +40,12 @@ int main() {
     adrsock.sin6_port = htons(1124); 
     adrsock.sin6_addr = in6addr_any; // une variable de type struct in6_addr qui contient l’adresse locale au format IPv6 avec octets déjà dans l’ordre réseau
 
+    int ok = 1;
+    int ra = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &ok, sizeof(ok));
+    if (ra < 0) {
+        perror("Erreur sockopt");
+        exit(EXIT_FAILURE);
+    }
     /* lier la socket à un numéro de port */
     int r = bind(sock, (struct sockaddr *) &adrsock, sizeof(adrsock));
 
@@ -56,7 +62,7 @@ int main() {
     /* on récupère l'adresse du client */
     struct sockaddr_in adrclient;
     socklen_t size = sizeof(adrclient);  
-    while(1) {    
+    for (int i = 0; i < 15; i++) {    
         /* pour accepter la demande de connexion d'un client */
         int sockclient = accept(sock, (struct sockaddr *) &adrclient, &size);
         if(sockclient  >= 0) {
@@ -64,12 +70,22 @@ int main() {
             inet_ntop(AF_INET6, &(adrclient.sin_addr), addr_buf, sizeof(addr_buf));
         }
         printf("[*] Connexion établie avec %s:%d\n", inet_ntoa(adrclient.sin_addr), ntohs(adrclient.sin_port));
+        printf("post connexion\n");
 
         args.socket_client = sockclient;
+        
+        fd_set rset;
+        FD_ZERO(&rset);
+        
+        handle_tchat_serveur(sock, rset);
 
+        args.rset = rset;
+       
         // Chaque client va s'éxecuter dans un thread
         if (pthread_create(&tpthread[nb_thread], NULL, (void *)client_thread,(void *)&args) < 0) {perror("Création thread"); exit(1);}
         nb_thread++;
+
+        
     }
 
     for(int i=0; i<15; i++)
@@ -77,6 +93,51 @@ int main() {
     
     close(sock);
     return 0;
+}
+
+void handle_tchat_serveur (int sock_TCP, fd_set rset){
+    printf("handle tchat serveur\n");
+
+    int message1;
+    FD_SET(sock_TCP, &rset);
+    printf("before select\n");
+    if(sock_TCP < 0) perror("erreur sock_TCP du serveur\n");
+
+    struct timeval timeout;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+
+    select(sock_TCP + 1, &rset, NULL, 0, &timeout); 
+    
+    if (FD_ISSET(sock_TCP, &rset)) {
+
+        if (recv(sock_TCP, &message1, sizeof(int), 0) < 0)
+            perror("recv");
+
+       // printf("len = %d", message1);
+        int len = message1;
+
+        int paquets_envoyes = 0;
+        int res_recv;
+        size_t taille_message = (2 + (len / 2)) * sizeof(u_int16_t);
+        u_int16_t *message = malloc((2 + (len / 2)) * sizeof(u_int16_t));
+
+        while ((size_t)paquets_envoyes < sizeof(taille_message)){
+
+            res_recv = recv(sock_TCP, message, sizeof(taille_message - paquets_envoyes), 0);
+
+            if (res_recv == -1)
+            {
+                perror("Erreur lors de la reception du message TCP");
+                exit(EXIT_FAILURE);
+            }
+            if (res_recv == 0)
+                break;
+            paquets_envoyes += res_recv;
+        }
+        printf("reception message tchat");
+        free(message);
+    }
 }
 
 
