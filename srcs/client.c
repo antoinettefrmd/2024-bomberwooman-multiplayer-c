@@ -173,7 +173,14 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif){
     adresseMultiDiff.sin6_family = AF_INET6;
     adresseMultiDiff.sin6_addr = in6addr_any;
     adresseMultiDiff.sin6_port = htons(portMDIFF);
-   
+
+    int ok = 1;
+    if (setsockopt(sockMdifClient, SOL_SOCKET, SO_REUSEADDR, &ok, sizeof(ok)) < 0){
+        perror("setsockopt");
+        close(sockMdifClient);
+        exit(EXIT_FAILURE);
+    }
+
     if (bind(sockMdifClient, (struct sockaddr*)&adresseMultiDiff, sizeof(adresseMultiDiff)) < 0) {
         perror("Erreur lors de la liaison de la socket");
         close(sockMdifClient);
@@ -184,8 +191,10 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif){
     struct ipv6_mreq group;
     inet_pton(AF_INET6, adrMdif, &group.ipv6mr_multiaddr);
   //  memcpy(&group.ipv6mr_multiaddr, &adresseMultiDiff.sin6_addr, sizeof(struct in6_addr));
-    group.ipv6mr_interface = if_nametoindex("wlo1"); /* interface réseau multicast par défaut */
-    
+    int ifindex = if_nametoindex("wlp0s20f3");
+    if (ifindex < 0) {perror("erreur interface"); close(sockMdifClient); exit(EXIT_FAILURE);}
+    group.ipv6mr_interface = ifindex; /* interface réseau multicast par défaut */
+  
     if (setsockopt(sockMdifClient, IPPROTO_IPV6, IPV6_JOIN_GROUP, &group, sizeof(group)) < 0){
         perror("setsockopt");
         close(sockMdifClient);

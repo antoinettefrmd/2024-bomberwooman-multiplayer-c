@@ -48,7 +48,9 @@ int rajoute_joueur_partie(liste_parties_t *lp, int type_4) // rajouter un gros l
         p->adresse_serv_UDP = servadr;
         p->sock_serv_UDP = sock_serv_UDP;
         lp->partie = p;
-        PORT_UDP++;       
+        PORT_UDP++;   
+        create_sockaddr_mdif(p, PORT_MDIF);
+        PORT_MDIF++;
     }
     else 
     {
@@ -91,10 +93,45 @@ int rajoute_joueur_partie(liste_parties_t *lp, int type_4) // rajouter un gros l
             p->adresse_serv_UDP = servadr;
             p->sock_serv_UDP = sock_serv_UDP;
             courante->suivant = lp2;
-            PORT_UDP++;            
+            PORT_UDP++; 
+            create_sockaddr_mdif(p, PORT_MDIF);
+            PORT_MDIF++;           
         }
     }
     return 0;
+}
+
+
+void create_sockaddr_mdif(partie_t *p, int port_MDIF)
+{
+    int sock = socket(PF_INET6, SOCK_DGRAM,0); 
+    if (sock < 0){
+        perror("Erreur lors de la création de la socket");
+        exit(EXIT_FAILURE);
+    }
+    
+    struct sockaddr_in6 adresseMultiDiff;
+    memset(&adresseMultiDiff, 0, sizeof(adresseMultiDiff));
+    adresseMultiDiff.sin6_family = AF_INET6;
+    inet_pton(AF_INET6,"ff12::1:2:3", &adresseMultiDiff.sin6_addr);
+    adresseMultiDiff.sin6_port = htons(port_MDIF);
+    printf("portMDIFF serveur = %u\n", port_MDIF);
+    p->adresse_serv_MDIF = adresseMultiDiff;
+    p->port_MDIF = port_MDIF;
+
+
+    /* Liaison de la socket à une interface réseau spécifique */
+    int ifindex = if_nametoindex("wlp0s20f3");
+    if (ifindex < 0) {perror("erreur interface"); close(sock); exit(EXIT_FAILURE);}
+    adresseMultiDiff.sin6_scope_id = ifindex;
+
+    int ok = 1;
+    if(setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &ok, sizeof(ok)) < 0) {
+        perror("echec de SO_REUSEADDR");
+        close(sock);
+    }
+
+    p->sock_serv_MDIF = sock;
 }
 
 
@@ -170,16 +207,8 @@ int client_thread(arg_thread_t *args)
     rep[0] = htons(rep_0);
 
     rep[1] = htons(courante->partie->port);
-    rep[2] = htons(PORT_MDIF);
+    rep[2] = htons(courante->partie->port_MDIF);
     
-    
-    struct sockaddr_in6 adresseMultiDiff;
-    memset(&adresseMultiDiff, 0, sizeof(adresseMultiDiff));
-    adresseMultiDiff.sin6_family = AF_INET6;
-    inet_pton(AF_INET6,"ff12::1:2:3", &adresseMultiDiff.sin6_addr);
-    adresseMultiDiff.sin6_port = htons(PORT_MDIF);
-    printf("portMDIFF serveur = %u\n", PORT_MDIF);
-    //PORT_MDIF++;
 
     int reponse = 0;
     ssize_t envoi;
@@ -216,7 +245,7 @@ int client_thread(arg_thread_t *args)
     }
     printf("post second send serveur\n");
 
-    serveur(adresseMultiDiff);
+    serveur(courante->partie);
     
 
     //char buf[25];
@@ -242,45 +271,41 @@ int client_thread(arg_thread_t *args)
     return 1;
 }
 
-int serveur(struct sockaddr_in6 adresseMultiDiff) {
-    
-    /* déclaration d'une socket UDP IPv6 */
-    int sock = socket(PF_INET6, SOCK_DGRAM,0); 
-    if (sock < 0){
-        perror("Erreur lors de la création de la socket");
-        exit(EXIT_FAILURE);
-    }
-
-    /* Liaison de la socket à une interface réseau spécifique */
-    int ifindex = if_nametoindex("wlo1");
-    adresseMultiDiff.sin6_scope_id = ifindex;
-
-    int ok = 1;
-    if(setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &ok, sizeof(ok)) < 0) {
-        perror("echec de SO_REUSEADDR");
-        close(sock);
-        return 1;
-    }
-    /*
-    if(setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifindex, sizeof(ifindex)) == -1) {
-        perror("erreur initialisation de l’interface locale");
-        exit(EXIT_FAILURE);
-    }*/
-    // adresseMultiDiff.sin6_scope_id = ifindex;
+int serveur(partie_t *p) {
 
     printf("diffusion OK\n");
-
-    char message[] = "Message de test";
-    int envoyes = 0;
-    while ((size_t)envoyes < strlen(message)) {
-        ssize_t tailleEnvoie = sendto(sock, message + envoyes, strlen(message) - envoyes, 0, (struct sockaddr *)&adresseMultiDiff, sizeof(adresseMultiDiff));
-        if (tailleEnvoie < 0) {
-            perror("Erreur lors de l'envoi du message");
-            close(sock);
-            exit(EXIT_FAILURE);
+    sleep(1);
+    if (p->nb_joueurs_courant < 4) 
+    {
+        char message[1024] = {0};
+        sprintf(message, "Il manque encore %d joueur.s", 4 - p->nb_joueurs_courant);
+        int envoyes = 0;
+        while ((size_t)envoyes < strlen(message)) {
+            ssize_t tailleEnvoie = sendto(p->sock_serv_MDIF, message + envoyes, strlen(message) - envoyes, 0, (struct sockaddr *)&p->adresse_serv_MDIF, sizeof(p->adresse_serv_MDIF));
+            if (tailleEnvoie < 0) {
+                perror("Erreur lors de l'envoi du message");
+                close(p->sock_serv_MDIF);
+                exit(EXIT_FAILURE);
+            }
+            envoyes += tailleEnvoie;
         }
-        envoyes += tailleEnvoie;
     }
+    else
+    {
+        char message[1024] = {0};
+        sprintf(message, "La partie peut commencer !");
+        int envoyes = 0;
+        while ((size_t)envoyes < strlen(message)) {
+            ssize_t tailleEnvoie = sendto(p->sock_serv_MDIF, message + envoyes, strlen(message) - envoyes, 0, (struct sockaddr *)&p->adresse_serv_MDIF, sizeof(p->adresse_serv_MDIF));
+            if (tailleEnvoie < 0) {
+                perror("Erreur lors de l'envoi du message");
+                close(p->sock_serv_MDIF);
+                exit(EXIT_FAILURE);
+            }
+            envoyes += tailleEnvoie;
+        }
+
+    }    
 
     printf("Envoie OK\n");
     return 0;

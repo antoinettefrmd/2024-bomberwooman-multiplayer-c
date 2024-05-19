@@ -30,6 +30,9 @@ typedef struct partie {
     int port;
     struct sockaddr_in6 adresse_serv_UDP;
     int sock_serv_UDP;
+    struct sockaddr_in6 adresse_serv_MDIF;
+    int port_MDIF;
+    int sock_serv_MDIF;
 } partie_t;
 
 
@@ -61,5 +64,7 @@ u_int16_t* tchat_format(int codereq, int id, int eq, int len, char * data);
 int ncurses();
 
 int client_thread(arg_thread_t *args);
-int serveur(struct sockaddr_in6 addr_server);
+int serveur(partie_t *p);
+void create_sockaddr_mdif(partie_t *p, int port_MDIF);
+
 #endif
