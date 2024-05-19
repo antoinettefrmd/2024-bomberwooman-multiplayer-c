@@ -13,22 +13,22 @@ void *explode_bomb(arg_thread_bomb *arg)
     board *b = args->b;
     line *l = args->l;
     // propagation
-    if ((get_grid(b, x, y+1) != 3) && (get_grid(b, x, y+1) != 4)){ // ni D ni I
+    if ((get_grid(b, x, y+1) != 1) && (get_grid(b, x, y+1) != 2)){ 
         set_grid(b, x, y+2, 0);
     }
-    if ((get_grid(b, x, y-1) != 3) && (get_grid(b, x, y-1) != 4)){
+    if ((get_grid(b, x, y-1) != 1) && (get_grid(b, x, y-1) != 2)){
         set_grid(b, x, y-2, 0);
     }
-    if ((get_grid(b, x-1, y) != 3) && (get_grid(b, x-1, y) != 4)){
+    if ((get_grid(b, x-1, y) != 1) && (get_grid(b, x-1, y) != 2)){
         set_grid(b, x-2, y, 0);
     }
-    if ((get_grid(b, x+1, y) != 3) && (get_grid(b, x+1, y) != 4)){
+    if ((get_grid(b, x+1, y) != 1) && (get_grid(b, x+1, y) != 2)){
         set_grid(b, x+2, y, 0);
     }
     // boucle première rangée
     for (int i = x - 1; i < x + 2; i++) {
         for (int j = y - 1; j < y + 2; j++) {
-            if ((get_grid(b, i, j) == 4) || (i == x && j == y)) {
+            if ((get_grid(b, i, j) == 3) || (i == x && j == y)) {
                 set_grid(b, i, j, 0);
             }
             // if (get_grid(b, i, j) == 1) { 

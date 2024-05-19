@@ -193,7 +193,7 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif){
   //  memcpy(&group.ipv6mr_multiaddr, &adresseMultiDiff.sin6_addr, sizeof(struct in6_addr));
     int ifindex = if_nametoindex("wlp0s20f3");
     if (ifindex < 0) {perror("erreur interface"); close(sockMdifClient); exit(EXIT_FAILURE);}
-    group.ipv6mr_interface = ifindex; /* interface réseau multicast par défaut */
+    group.ipv6mr_interface = 0; /* interface réseau multicast par défaut */
   
     if (setsockopt(sockMdifClient, IPPROTO_IPV6, IPV6_JOIN_GROUP, &group, sizeof(group)) < 0){
         perror("setsockopt");
@@ -209,16 +209,39 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif){
     memset(buf, 0, SIZE_MESS);
 
     /* Lecture des messages multicast diffusés par le serveur */
-    while (octets_recus < SIZE_MESS) {    
-        paquet_recu = read(sockMdifClient, buf + octets_recus, SIZE_MESS - octets_recus);
-        if (paquet_recu < 0) {
-            perror("Erreur lors de la réception du message");
-            close(sockMdifClient);
-            exit(EXIT_FAILURE); // Sortie en cas d'erreur de réception.
-        }
-
-        printf("Message reçu du serveur: %.*s\n", (int)paquet_recu, buf);
+    paquet_recu = read(sockMdifClient, buf + octets_recus, SIZE_MESS - octets_recus);
+    if (paquet_recu < 0) {
+        perror("Erreur lors de la réception du message");
+        close(sockMdifClient);
+        exit(EXIT_FAILURE); // Sortie en cas d'erreur de réception.
     }
+    // octets_recus+=paquet_recu;
+    printf("Message reçu du serveur: %.*s\n", (int)paquet_recu, buf);
+
+    // --------------------------------------------------------------------------------------------------
+    uint16_t code[3];
+
+    paquet_recu = read(sockMdifClient, code + octets_recus, 6 - octets_recus);
+    if (paquet_recu < 0) {
+        perror("Erreur lors de la réception du message");
+        close(sockMdifClient);
+        exit(EXIT_FAILURE); // Sortie en cas d'erreur de réception.
+    }
+
+    uint16_t hauteur = code[2] & 0xFF;
+    uint16_t largeur = (code[2] & 0xFF) >> 8;
+    char grille[largeur*hauteur];
+    octets_recus = 0;
+
+    paquet_recu = read(sockMdifClient, grille + octets_recus, largeur*hauteur - octets_recus);
+    if (paquet_recu < 0) {
+        perror("Erreur lors de la réception du message");
+        close(sockMdifClient);
+        exit(EXIT_FAILURE); // Sortie en cas d'erreur de réception.
+    }
+
+    printf("largeur : %d ; hauteur : %d ; grille : %s\n", largeur, hauteur, grille);
+
     close(sockMdifClient);
 }
 

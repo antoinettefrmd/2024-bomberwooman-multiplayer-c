@@ -10,36 +10,6 @@
 
 static int tabulation = 7; // destiné à tous les joueurs
 
-
-void setup_board(board* board) {
-    srand(time(NULL));
-    int lines; int columns;
-    getmaxyx(stdscr,lines,columns);
-    board->h = lines - 2 - 1; // 2 rows reserved for border, 1 row for chat
-    board->w = columns - 2; // 2 columns reserved for border
-    board->grid = calloc((board->w)*(board->h),sizeof(char));
-
-    int x, y; 
-
-    for (x = 0; x < board->w; x++) {    
-        for (y = 0; y < board->h; y++) {
-            if ((x%5 == 4) && (y%2 == 1) ) set_grid(board, x, y, 3);
-        }    
-    }
-    for (x = 0 ; x < board->w; x++) {   
-        if (x > 5 && (rand()*3 == 2)) set_grid(board, x, 0, 4);
-        if (x > 5 && (rand()*3 == 2)) set_grid(board, board->h, 0, 4);
-        for (y = 0 ; y < board->h; y++) {
-            if (rand()%5 == 1) set_grid(board, x, y, 4);
-        }    
-    }
-    for (y = 5 ; y < board->h; y++) {
-        if (rand()*3 == 2) set_grid(board, 0, y, 4);
-        if (rand()*3 == 2) set_grid(board, board->w, y, 4);
-    }
-
-}
-
 void free_board(board* board) {
     free(board->grid);
 }
@@ -63,16 +33,28 @@ void refresh_game(board* b, line* l) {
                     c = ' ';
                     break;
                 case 1:
-                    c = 'O';
-                    break;
-                case 2:
-                    c = 'B';
-                    break;
-                case 3 :
                     c = 'I';
                     break;
-                case 4 : 
+                case 2:
                     c = 'D';
+                    break;
+                case 3 :
+                    c = 'B';
+                    break;
+                case 4 : 
+                    c = 'E';
+                    break;
+                case 5 : 
+                    c = '0';
+                    break;
+                case 6 : 
+                    c = '1';
+                    break;
+                case 7 : 
+                    c = '2';
+                    break;
+                case 8 : 
+                    c = '3';
                     break;
                 default:
                     c = '?';
@@ -183,24 +165,24 @@ bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, st
                 exit(EXIT_FAILURE);
             }
             actions(4, buf, sock_UDP,serv_dest); 
-            set_grid(b,p->x,p->y,2) ; 
+            set_grid(b,p->x,p->y,4); 
             return false;
         case QUIT:
             return true;
         default: break;
     }
-    if ((get_grid(b, p->x + xd, p->y + yd) == 3) // si le joueur avance sur un mur ou en dehors du jeu
-    || (get_grid(b, p->x + xd, p->y + yd) == 4) 
+    if ((get_grid(b, p->x + xd, p->y + yd) == 1) // si le joueur avance sur un mur ou en dehors du jeu
+    || (get_grid(b, p->x + xd, p->y + yd) == 2) 
     || p->x + xd < 0 || p->y + yd < 0 
     || p->x + xd >= b->w || p->y + yd >= b->h) {
-        actions(5, buf, sock_UDP,serv_dest); set_grid(b,p->x,p->y,5) ; return false;
+        actions(5, buf, sock_UDP,serv_dest); set_grid(b,p->x,p->y,9) ; return false;
     }
     else {
-        if(get_grid(b,p->x,p->y) != 2) set_grid(b, p->x,p->y,0);
+        if(get_grid(b,p->x,p->y) != 3) set_grid(b, p->x,p->y,0);
         p->x += xd; p->y += yd;
     }
 
-    if (get_grid(b,p->x,p->y) != 2) set_grid(b,p->x,p->y, 1);
+    if (get_grid(b,p->x,p->y) != 3) set_grid(b,p->x,p->y, 5); // joueur courant
     return false;
 }
 
@@ -226,9 +208,9 @@ int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 
     start_color(); // Enable colors
     init_pair(1, COLOR_YELLOW, COLOR_BLACK); // Define a new color style (text is yellow, background is black)
 
-    setup_board(b);
-    p->x *= (b->w - 1);
-    p->y *= (b->h - 1);
+    // setup_board(b);
+    // p->x *= (b->w - 1); //configure les coordonnées du joueur 
+    // p->y *= (b->h - 1);
     //printf("x = %d, y = %d\n", p->x, p->y);
     //exit(0);
     while (true) {

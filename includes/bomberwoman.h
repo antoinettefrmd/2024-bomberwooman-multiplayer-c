@@ -11,6 +11,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <math.h>
 
 #define PORT_TCP 4444
 
@@ -26,6 +27,7 @@ typedef struct joueur {
 
 typedef struct partie {
     int nb_joueurs_courant;
+    int type; // 0 2v2 1 4adv
     joueur_t *joueurs[4];
     int port;
     struct sockaddr_in6 adresse_serv_UDP;
@@ -62,6 +64,7 @@ u_int16_t* tchat_format(int codereq, int id, int eq, int len, char * data);
 void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char data[], int len);
 
 int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 serv_dest);
+u_int16_t *grille_format(int num, int hauteur, int largeur, char *plateau);
 
 int client_thread(arg_thread_t *args);
 
