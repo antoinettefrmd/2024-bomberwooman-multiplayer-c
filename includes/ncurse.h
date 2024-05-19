@@ -25,8 +25,10 @@ typedef struct arg_thread_bomb {
     int x;
     int y;
     struct board *b;
+    struct line *l;
 } arg_thread_bomb;
 
+void refresh_game(board* b, line* l);
 void *explode_bomb(arg_thread_bomb *args);
 void set_grid(board* b, int x, int y, int v);
 int get_grid(board* b, int x, int y) ;

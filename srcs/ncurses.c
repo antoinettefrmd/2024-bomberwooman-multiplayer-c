@@ -148,7 +148,7 @@ ACTION control(line* l) {
     return a;
 }
 
-bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 serv_dest) {
+bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 serv_dest, line *l) {
     pthread_t thread_bomb;
     arg_thread_bomb *args;
 
@@ -173,6 +173,7 @@ bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, st
             args->x = p->x;
             args->y = p->y;
             args->b = b;
+            args->l = l;
             // printf("x : %d ; y : %d\n", args->x, args->y);
             if (pthread_create(&thread_bomb, NULL,(void *)explode_bomb, (void *)args) < 0) {
                 perror("Création thread");
@@ -224,7 +225,7 @@ int ncurses(uint16_t *rep_serv, int sock_UDP, struct sockaddr_in6 serv_dest)
     setup_board(b);
     while (true) {
         ACTION a = control(l);
-        if (perform_action(b, p, a, rep_serv, sock_UDP, serv_dest)) break;
+        if (perform_action(b, p, a, rep_serv, sock_UDP, serv_dest, l)) break;
         refresh_game(b,l);
         usleep(30*1000);
     }
