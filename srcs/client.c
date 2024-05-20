@@ -117,9 +117,10 @@ int main (int argc, const char *argv[]) {
     }
     servadr_dest.sin6_port = htons(portUDP);
     
-   // ncurses(reponse_serveur, sock_UDP, sock, servadr_dest);
+    //ncurses(reponse_serveur, sock_UDP, sock, servadr_dest);
     abonnementMultidiff(portMDIFF, adrmdif, sock, sock_UDP, reponse_serveur, servadr_dest);
     printf("appel reception tchat");
+    
     pthread_t tchat;
     if (pthread_create(&tchat, NULL, (void *)reception_tchat, (void *)&sock) < 0){
         perror("pthread_create failed");
@@ -244,6 +245,7 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP,int 
            ncurses(rep_serv, sock_UDP, sock_TCP, serv_dest);
         }
     }
+    printf("après le while abonnementMDiff\n");
     close(sockMdifClient);
 }
 
@@ -321,7 +323,8 @@ void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char dat
 }
 
 int reception_tchat (int *sock){
-    printf("reception tchat dans client");
+    printf("reception tchat dans client\n");
+    
     int len_recu;
     int recu = 0;
     int octet_recu = 0;

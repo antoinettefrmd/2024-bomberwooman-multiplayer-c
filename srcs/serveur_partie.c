@@ -375,9 +375,8 @@ void handle_tchat_serveur (int sock_TCP, partie_t *p){
 
     printf("Reception tchat %c\n", (char)(message[1] & 0xFF));
    
-    u_int16_t codereq = message[0] & 0x1FFF;
+    u_int16_t codereq = ntohs(message[0]) & 0x1FFF;
    
-   // int codereq = 7;
     printf("codereq %u\n",codereq);
 
     if (codereq == 7) { // envoyé à tout le monde
@@ -399,7 +398,7 @@ void handle_tchat_serveur (int sock_TCP, partie_t *p){
         }    
     } else { // envoie uniquement à l'équipier
         int equipe = (ntohs(message[0]) >> 15) & 0x1;
-        printf("equipe %d", equipe);
+        printf("equipe %d\n", equipe);
         int sock_client = 0;
 
         int paquets_envoyes = 0; 
