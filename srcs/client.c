@@ -283,7 +283,7 @@ void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char dat
     u_int16_t id = (ntohs(buf[0]) >> 13) & 0x3;
     u_int16_t eq = (ntohs(buf[0]) >> 15) & 0x1;
 
-    //C'est valeur = (hauteur << 8) | largeur
+    // C'est valeur = (hauteur << 8) | largeur
    
 
     if (codereq == 9) // si on est en mode 4 joueurs tabulation est forcément égal à 7
@@ -323,10 +323,10 @@ void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char dat
 
 int reception_tchat (int *sock){
     
-    u_int16_t len_recu;
+    int len_recu;
     int octets_recus = 0;
     int recu = 0;
-        while ((size_t)octets_recus < sizeof(len_recu)) {
+        while ((size_t)octets_recus < sizeof(5)) {
             recu = recv(*sock, &len_recu, sizeof(len_recu), 0);
             if (recu < 0){
                 perror("recv len failed");
@@ -335,7 +335,7 @@ int reception_tchat (int *sock){
             octets_recus += recu;
         }
 
-    int taille_message = ((len_recu / 2) + 2) * sizeof(u_int16_t);
+    u_int16_t taille_message = ((len_recu / 2) + 2) * sizeof(u_int16_t);
     u_int16_t *message = malloc(taille_message);
     if (!message) {
         perror("malloc failed");
@@ -361,14 +361,13 @@ int reception_tchat (int *sock){
         printf("paquets recus client : %d\n", paquets_recu);
     }
 
-     printf("Reception tchat %c", (char)(message[1] & 0xFF));
-    //printf("%c", message[6] & 0xFF);
-      for (int i = 2; i < len_recu / 2 + 2 ; i++ ) {
-              printf("%c", (char)((message[i]) >> 8));
-              printf("%c", (char)(message[i] & 0xFF));
-      }
-     //printf("Reception tchat bonjour");
-     printf("\n");
+    printf("message %c", (message[1] & 0xFF));
+    for (int i = 2; i < len_recu / 2 + 2 ; i++ ) {
+        printf("%c", (char)((message[i]) >> 8));
+        printf("%c", (char)(message[i] & 0xFF));
+    }
+    
+    printf("\n");
 
     return 0;
 }
