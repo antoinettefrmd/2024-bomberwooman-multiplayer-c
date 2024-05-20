@@ -323,6 +323,7 @@ void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char dat
 
 int reception_tchat (int *sock){
     
+    
     int len_recu;
     int octets_recus = 0;
     int recu = 0;

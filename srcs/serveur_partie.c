@@ -415,13 +415,17 @@ void handle_tchat_serveur (int sock_TCP, partie_t *p){
         int equipe = (ntohs(message[0]) >> 15) & 0x1;
         printf("equipe %d\n", equipe);
         
-
+        
         int paquets_envoyes = 0; 
         int res_send;
 
         for (int i = 0; i < p->nb_joueurs_courant; i++){
             if( p->joueurs[i]->id_equipe == equipe){
-
+                if (send(p->joueurs[i]->sock_client, &len_recu, sizeof(len_recu), 0) < 0) {
+                perror("send length");
+                free(message);
+                exit(EXIT_FAILURE);
+                }
                 while (paquets_envoyes < taille_message){
                     res_send = send(p->joueurs[i]->sock_client, message + paquets_envoyes, taille_message - paquets_envoyes, 0);
 
