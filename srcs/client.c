@@ -239,9 +239,6 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP,int 
         }
         printf("%s\n",buf);
     }
-    
-    printf("après le while abonnementMDiff\n");
-
 
     u_int16_t *header = malloc(sizeof(u_int16_t )* 400);
     memset(header, 0, sizeof(u_int16_t )* 400);
@@ -252,24 +249,24 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP,int 
         close(sockMdifClient);
         exit(EXIT_FAILURE); // Sortie en cas d'erreur de réception.
     }
-    printf("j'ai recu la grille \n");
+
     // int codereq = ntohs(header[0]) & 0x1FFF;
     // int id = (ntohs(header[0]) >> 13) & 0x3;
     // int eq = (ntohs(header[0]) >> 15) & 0x1;
     // int num = (ntohs(header[1])) & 0xFFFF;
 
-    int *grille = malloc(sizeof(int) * 25*10 +1);
+    int *grille = malloc(sizeof(int) * 25*10);
     int largeur = ntohs(header[2]) & 0xFF;
     int hauteur = (ntohs(header[2]) >> 8) & 0xFF;
-    int size = (((largeur) * (hauteur)) % 2 == 0) ? (((largeur) * (hauteur)) / 2) + 3 : (((largeur) * (hauteur)) / 2) + 4;
+    int taille = (((largeur) * (hauteur)) % 2 == 0) ? (((largeur) * (hauteur)) / 2) + 3 : (((largeur) * (hauteur)) / 2) + 4;
     int i = 0;
     int k;
-    for(k = 3; k < size; k++) {
+    for(k = 3; k < taille; k++) {
         int tmp = ntohs(header[k]) & 0xFF;
         grille[i] = tmp;
         i++;
 
-        if(((hauteur) * (largeur)) % 2 == 1 && k == size - 1) {
+        if(((hauteur) * (largeur)) % 2 == 1 && k == taille - 1) {
             break;
         }
 
@@ -277,26 +274,13 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP,int 
         grille[i] = tmp;
         i++;
     }
-    // grille[i-1] = header[k];
 
-    // else if(codereq == 12) {
-    //     int nb = (ntohs(header[2])) & 0xFF;
-    // }
-    for(int i = 0 ; i < 10*25 ; i++)
-    {
-        if (i%25==0) printf("\n");
-        printf("%d", grille[i]);
-    }
-    printf("\n");
     board *b = malloc(sizeof(board));
     memset(b,0,sizeof(board));
     b->h = hauteur;
     b->w = largeur;
     b->grid = grille;
     ncurses(rep_serv, sock_UDP, sock_TCP, id, serv_dest, b);
-    // }
-    // printf("largeur : %d ; hauteur : %d ; grille : %s\n", largeur, hauteur);
-
 
     close(sockMdifClient);
 }
