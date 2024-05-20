@@ -135,7 +135,7 @@ ACTION control(line* l, int sock_TCP, uint16_t *rep_serv) {
             break;
         case 10:  
             messageTchatClient(sock_TCP, rep_serv, tabulation, l->data, strlen(l->data)); 
-            memset(l->data, 0, sizeof(l->data)); break;
+            memset(l->data, 0, sizeof(l->data)); l->cursor = 0; break;
         case 9:
            tabulation = tabulation == 8 ? 7 : 8; break;
         default:

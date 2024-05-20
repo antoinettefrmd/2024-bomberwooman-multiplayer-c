@@ -70,7 +70,6 @@ clean:
 fclean:		clean
 			@$(RM) $(NAME)
 			@$(RM) $(NAME_C)
-			@$(SMAKE) -C $(LIBFT) fclean
 			@echo "$(CYAN)$(NAME) executable files cleaned!$(DEF_COLOR)"
 			@echo "$(CYAN)$(NAME_C) executable files cleaned!$(DEF_COLOR)"
 

@@ -323,52 +323,53 @@ void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char dat
 
 int reception_tchat (int *sock){
     
-    
-    int len_recu;
-    int octets_recus = 0;
-    int recu = 0;
-        while ((size_t)octets_recus < sizeof(5)) {
-            recu = recv(*sock, &len_recu, sizeof(len_recu), 0);
-            if (recu < 0){
-                perror("recv len failed");
+    while (1) {
+        int len_recu;
+        int octets_recus = 0;
+        int recu = 0;
+            while ((size_t)octets_recus < sizeof(5)) {
+                recu = recv(*sock, &len_recu, sizeof(len_recu), 0);
+                if (recu < 0){
+                    perror("recv len failed");
+                    exit(EXIT_FAILURE);
+                }
+                octets_recus += recu;
+            }
+
+        u_int16_t taille_message = ((len_recu / 2) + 2) * sizeof(u_int16_t);
+        u_int16_t *message = malloc(taille_message);
+        if (!message) {
+            perror("malloc failed");
+            return -1;
+        }
+        printf("len recu = %d\n", len_recu);
+
+        printf("taille : %d\n",taille_message);
+        int paquets_recu = 0;
+        int res_recv;
+        while (paquets_recu < taille_message) {
+            printf("je boucle\n");
+            res_recv = recv(*sock, message + paquets_recu, taille_message - paquets_recu, 0);
+
+            if (res_recv == -1){
+                perror("Erreur lors de la reception du message TCP");
+                free(message);
                 exit(EXIT_FAILURE);
             }
-            octets_recus += recu;
+            if (res_recv == 0) break;
+
+            paquets_recu += res_recv;
+            printf("paquets recus client : %d\n", paquets_recu);
         }
 
-    u_int16_t taille_message = ((len_recu / 2) + 2) * sizeof(u_int16_t);
-    u_int16_t *message = malloc(taille_message);
-    if (!message) {
-        perror("malloc failed");
-        return -1;
-    }
-    printf("len recu = %d\n", len_recu);
-    
-    printf("taille : %d\n",taille_message);
-    int paquets_recu = 0;
-    int res_recv;
-    while (paquets_recu < taille_message) {
-        printf("je boucle\n");
-        res_recv = recv(*sock, message + paquets_recu, taille_message - paquets_recu, 0);
-
-        if (res_recv == -1){
-            perror("Erreur lors de la reception du message TCP");
-            free(message);
-            exit(EXIT_FAILURE);
+        printf("message %c", (message[1] & 0xFF));
+        for (int i = 2; i < len_recu / 2 + 2 ; i++ ) {
+            printf("%c", (char)((message[i]) >> 8));
+            printf("%c", (char)(message[i] & 0xFF));
         }
-        if (res_recv == 0) break;
 
-        paquets_recu += res_recv;
-        printf("paquets recus client : %d\n", paquets_recu);
+        printf("\n");
     }
-
-    printf("message %c", (message[1] & 0xFF));
-    for (int i = 2; i < len_recu / 2 + 2 ; i++ ) {
-        printf("%c", (char)((message[i]) >> 8));
-        printf("%c", (char)(message[i] & 0xFF));
-    }
-    
-    printf("\n");
 
     return 0;
 }
