@@ -249,23 +249,25 @@ u_int16_t* tchat_format(int codereq, int id, int eq, int len, char * data) {
     
     u_int16_t *tchat = malloc((2 + (len / 2)) * sizeof(u_int16_t));
 
-    u_int16_t tchat_1;
-    u_int16_t tchat_i;
+   // u_int16_t tchat_1;
+    //u_int16_t tchat_i;
     int j = 1;
 
     tchat[0] = header(codereq, id, eq); // on place le header sur la première ligne
-
-    tchat_1 = 0;
-    tchat_1 |= (u_int16_t)(len & 0xFF); // le champ data est codé sur 8 bits (FF est le masque hexa pour 11111111)
-    tchat_1 |= (u_int16_t)((data[0]) << 8); // le premier caractère est placé sur le bit 8
-    tchat[1] = htons(tchat_1); // les deux octets sont au format big endiant
+    tchat[1] = (len << 8) | (data[0] & 0xFF);
+    // tchat_1 = 0;
+    // tchat_1 |= (u_int16_t)(len & 0xFF); // le champ data est codé sur 8 bits (FF est le masque hexa pour 11111111)
+    // tchat_1 |= (u_int16_t)((data[0]) << 8); // le premier caractère est placé sur le bit 8
+    // tchat[1] = htons(tchat_1); // les deux octets sont au format big endiant
     for (int i = 2; i < 2 + (len / 2); i++) { // on boucle sur le message
-        tchat_i = 0;
-        tchat_i |= (u_int16_t)(data[j] & 0xFF); // chaque caractère est codé sur un octet
-        if (i != len - 1 || len % 2 == 1)
-            tchat_i |= (u_int16_t)((data[j + 1] & 0xFF) << 8); // le prochain caractère rempli le second octet
-        j += 2;
-        tchat[i] = tchat_i; // puis on place les deux octets sur la ligne d'indice i
+        tchat[i] = (data[j] << 8) | (data[j + 1] & 0xFF);
+        j+= 2; 
+        // tchat_i = 0;
+        // tchat_i |= (u_int16_t)(data[j] & 0xFF); // chaque caractère est codé sur un octet
+        // if (i != len - 1 || len % 2 == 1)
+        //     tchat_i |= (u_int16_t)((data[j + 1] & 0xFF) << 8); // le prochain caractère rempli le second octet
+        // j += 2;
+        // tchat[i] = tchat_i; // puis on place les deux octets sur la ligne d'indice i
     }
     return tchat;
 }
@@ -280,6 +282,8 @@ void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char dat
     u_int16_t codereq = ntohs(buf[0]) & 0x1FFF;
     u_int16_t id = (ntohs(buf[0]) >> 13) & 0x3;
     u_int16_t eq = (ntohs(buf[0]) >> 15) & 0x1;
+
+    //C'est valeur = (hauteur << 8) | largeur
    
 
     if (codereq == 9) // si on est en mode 4 joueurs tabulation est forcément égal à 7
@@ -322,7 +326,7 @@ int reception_tchat (int *sock){
     u_int16_t len_recu;
     int octets_recus = 0;
     int recu = 0;
-        while ((size_t)octets_recus < sizeof(5)) {
+        while ((size_t)octets_recus < sizeof(len_recu)) {
             recu = recv(*sock, &len_recu, sizeof(len_recu), 0);
             if (recu < 0){
                 perror("recv len failed");
@@ -331,14 +335,14 @@ int reception_tchat (int *sock){
             octets_recus += recu;
         }
 
-    u_int16_t *message = malloc(len_recu);
+    int taille_message = ((len_recu / 2) + 2) * sizeof(u_int16_t);
+    u_int16_t *message = malloc(taille_message);
     if (!message) {
         perror("malloc failed");
         return -1;
     }
     printf("len recu = %d\n", len_recu);
     
-    int taille_message = ((len_recu / 2) + 2) * sizeof(u_int16_t);
     printf("taille : %d\n",taille_message);
     int paquets_recu = 0;
     int res_recv;
@@ -357,14 +361,14 @@ int reception_tchat (int *sock){
         printf("paquets recus client : %d\n", paquets_recu);
     }
 
-    printf("Reception tchat %c\n", (char)(message[1] & 0xFF));
-    // for (int i = 1; 2 < len_recu / 2; i++ ) {
-    //     if (i % 2 == 0) {
-    //         printf("%c", (char)((message[i] & 0xFF)>> 8));
-    //     }
-    //     else
-    //         printf("%c", (char)(message[i] & 0xFF));
-    // }
+     printf("Reception tchat %c", (char)(message[1] & 0xFF));
+    //printf("%c", message[6] & 0xFF);
+      for (int i = 2; i < len_recu / 2 + 2 ; i++ ) {
+              printf("%c", (char)((message[i]) >> 8));
+              printf("%c", (char)(message[i] & 0xFF));
+      }
+     //printf("Reception tchat bonjour");
+     printf("\n");
 
     return 0;
 }

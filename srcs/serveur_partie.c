@@ -349,14 +349,14 @@ void handle_tchat_serveur (int sock_TCP, partie_t *p){
 
     printf("Longueur du message reçue : %d\n", len_recu);
 
-    u_int16_t *message = malloc(len_recu);
+    u_int16_t taille_message = ((len_recu / 2) + 2) * sizeof(u_int16_t);
+    u_int16_t *message = malloc(taille_message);
     if (!message) {
         perror("malloc failed");
         return;
     }
     
-    int taille_message = ((len_recu / 2) + 2) * sizeof(u_int16_t);
-    printf("taille : %d\n",taille_message);
+    printf("taille : %u\n",taille_message);
     int paquets_recu = 0;
     int res_recv;
     while (paquets_recu < taille_message) {
@@ -380,7 +380,15 @@ void handle_tchat_serveur (int sock_TCP, partie_t *p){
     printf("codereq %u\n",codereq);
    // u_int16_t len = (ntohs(message[1] & 0xFF));
    // printf("len = %u\n", len);
+    printf("message = %c", message[1] & 0xFF);
+    
+    for (int i = 2; i < len_recu / 2 + 2; i++) {
+             printf("%c", (char)((message[i])>> 8));
+             printf("%c", (char)(message[i] & 0xFF));
 
+   }
+    printf("\n");
+    
     if (codereq == 7) { // envoyé à tout le monde
 
       int res_send;
@@ -406,6 +414,7 @@ void handle_tchat_serveur (int sock_TCP, partie_t *p){
                 paquets_envoyes += res_send;
             }
                 printf("je boucle\n");
+                printf("paquets envoyes : %d\n", paquets_envoyes);
         }
         printf("post for\n");
     } else { // envoie uniquement à l'équipier
@@ -419,7 +428,7 @@ void handle_tchat_serveur (int sock_TCP, partie_t *p){
         for (int i = 0; i < p->nb_joueurs_courant; i++){
             if( p->joueurs[i]->id_equipe == equipe){
 
-                while (paquets_envoyes < taille_message){
+                while ((size_t)paquets_envoyes < taille_message){
                     res_send = send(p->joueurs[i]->sock_client, message + paquets_envoyes, taille_message - paquets_envoyes, 0);
 
                     if (res_send == -1) {
