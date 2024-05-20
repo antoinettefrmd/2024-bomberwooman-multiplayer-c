@@ -135,7 +135,7 @@ ACTION control(line* l, int sock_TCP, uint16_t *rep_serv) {
             break;
         case 10:  
             messageTchatClient(sock_TCP, rep_serv, tabulation, l->data, strlen(l->data)); 
-            memset(l->data, 0, sizeof(l->data)); break;
+            memset(l->data, 0, sizeof(l->data)); l->cursor = 0;break;
         case 9:
            tabulation = tabulation == 8 ? 7 : 8; break;
         default:
@@ -229,11 +229,13 @@ int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 
     p->y *= (b->h - 1);
     //printf("x = %d, y = %d\n", p->x, p->y);
     //exit(0);
-         pthread_t tchat;
-        if (pthread_create(&tchat, NULL, (void *)reception_tchat, (void *)&sock_TCP) < 0){
-            perror("pthread_create failed");
-            exit(1);
+    pthread_t tchat;
+    
+    if (pthread_create(&tchat, NULL, (void *)reception_tchat, (void *)&sock_TCP) < 0){
+        perror("pthread_create failed");
+        exit(1);
     }
+
     while (true) {
         ACTION a = control(l, sock_TCP, rep_serv);
         if (perform_action(b, p, a, rep_serv, sock_UDP, serv_dest, l)) break;
