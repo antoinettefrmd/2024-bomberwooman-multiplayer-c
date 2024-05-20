@@ -212,15 +212,22 @@ bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, st
     return false;
 }
 
-int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 serv_dest, board *boa)
+int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, int id, struct sockaddr_in6 serv_dest, board *boa)
 {;
     board* b = boa;
     line* l = malloc(sizeof(line));
     l->cursor = 0;
     pos* p = malloc(sizeof(pos));
-    uint16_t id = (ntohs(rep_serv[0]) >> 13) & 0x3;
+    // uint16_t id = (ntohs(rep_serv[0]) >> 13) & 0x3;
     //printf("%u\n", id);
-    p->x = id % 2 ; p->y = id/2;
+    switch(id)
+    {
+        case 0 : p->x = 0; p->y =0; break;
+        case 1 : p->x = b->w-1; p->y =b->h-1; break;
+        case 2 : p->x = 0; p->y =b->h-1; break;
+        case 3 : p->x = b->w-1; p->y =0; break;
+    }
+    // p->x = id % 2 ; p->y = id/2;
     //printf("x = %d, y = %d\n", p->x, p->y);
 
     // NOTE: All ncurses operations (getch, mvaddch, refresh, etc.) must be done on the same thread.
@@ -234,8 +241,8 @@ int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 
     start_color(); // Enable colors
     init_pair(1, COLOR_YELLOW, COLOR_BLACK); // Define a new color style (text is yellow, background is black)
     // setup_board(b);
-    p->x *= (b->w - 1);
-    p->y *= (b->h - 1);
+    // p->x *= (b->w - 1);
+    // p->y *= (b->h - 1);
     //printf("x = %d, y = %d\n", p->x, p->y);
     //exit(0);
     //      pthread_t tchat;
@@ -244,11 +251,11 @@ int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 
     //         exit(1);
     // }
 
-    for(int i = 0 ; i < 10*25 ; i++)
-    {
-        if (i%25==0) printf("\n");
-        printf("%d", b->grid[i]);
-    }    
+    // for(int i = 0 ; i < 10*25 ; i++)
+    // {
+    //     if (i%25==0) printf("\n");
+    //     printf("%d", b->grid[i]);
+    // }    
     while (true) {
         ACTION a = control(l, sock_TCP, rep_serv);
         if (perform_action(b, p, a, rep_serv, sock_UDP, serv_dest, l)) break;

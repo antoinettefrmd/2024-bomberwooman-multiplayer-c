@@ -58,12 +58,12 @@ typedef struct arg_thread {
 
 int client(const char *argv[]);
 void actions(int a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 servadr_dest);
-void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP,int sock_UDP, uint16_t *rep_serv, struct sockaddr_in6 serv_dest);
+void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP,int sock_UDP,int id, uint16_t *rep_serv, struct sockaddr_in6 serv_dest);
 u_int16_t header(int codereq, int id, int eq);
 u_int16_t* tchat_format(int codereq, int id, int eq, int len, char * data);
 void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char data[], int len);
 
-int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 serv_dest, board * b);
+int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, int id, struct sockaddr_in6 serv_dest, board * b);
 void grille_format(int num,  u_int16_t  *test ,board *b);
 
 int client_thread(arg_thread_t *args);

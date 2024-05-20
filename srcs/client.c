@@ -119,7 +119,7 @@ int main (int argc, const char *argv[]) {
     servadr_dest.sin6_port = htons(portUDP);
     
    // ncurses(reponse_serveur, sock_UDP, sock, servadr_dest);
-    abonnementMultidiff(portMDIFF, adrmdif, sock, sock_UDP, reponse_serveur, servadr_dest);
+    abonnementMultidiff(portMDIFF, adrmdif, sock, sock_UDP, id, reponse_serveur, servadr_dest);
 
     //char buf[25];
     //sprintf(buf, "coucou ça fonctionne !");
@@ -159,7 +159,7 @@ void actions(int a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 servadr_de
 
 }
 
-void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP,int sock_UDP, uint16_t *rep_serv, struct sockaddr_in6 serv_dest){
+void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP,int sock_UDP, int id, uint16_t *rep_serv, struct sockaddr_in6 serv_dest){
     (void)sock_UDP;
     (void)rep_serv;
     (void)serv_dest;
@@ -293,7 +293,7 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP,int 
     b->h = hauteur;
     b->w = largeur;
     b->grid = grille;
-    ncurses(rep_serv, sock_UDP, sock_TCP, serv_dest, b);
+    ncurses(rep_serv, sock_UDP, sock_TCP, id, serv_dest, b);
     // }
     // printf("largeur : %d ; hauteur : %d ; grille : %s\n", largeur, hauteur);
 
