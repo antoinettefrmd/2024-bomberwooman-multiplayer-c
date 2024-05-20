@@ -373,20 +373,14 @@ void handle_tchat_serveur (int sock_TCP, partie_t *p){
         paquets_recu += res_recv;
     }
 
-    printf("Reception tchat %c\n", (char)(message[1] & 0xFF));
-   
     u_int16_t codereq = ntohs(message[0]) & 0x1FFF;
    
     printf("codereq %u\n",codereq);
-   // u_int16_t len = (ntohs(message[1] & 0xFF));
-   // printf("len = %u\n", len);
     printf("message = %c", message[1] & 0xFF);
-    
     for (int i = 2; i < len_recu / 2 + 2; i++) {
-             printf("%c", (char)((message[i])>> 8));
-             printf("%c", (char)(message[i] & 0xFF));
-
-   }
+        printf("%c", (char)((message[i])>> 8));
+        printf("%c", (char)(message[i] & 0xFF));
+    }
     printf("\n");
     
     if (codereq == 7) { // envoyé à tout le monde
@@ -402,7 +396,7 @@ void handle_tchat_serveur (int sock_TCP, partie_t *p){
                 free(message);
                 exit(EXIT_FAILURE);
             }
-             paquets_envoyes = 0; 
+            paquets_envoyes = 0; 
             while (paquets_envoyes < taille_message){
                 res_send = send(p->joueurs[i]->sock_client, message + paquets_envoyes, taille_message - paquets_envoyes, 0);
 
