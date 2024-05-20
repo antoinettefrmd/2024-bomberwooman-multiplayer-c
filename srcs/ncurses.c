@@ -4,35 +4,39 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "bomberwoman.h"
+#include "ncurse.h"
 
-#define TEXT_SIZE 255
 static int tabulation = 7; // destiné à tous les joueurs
 
-typedef enum ACTION { NONE, UP, DOWN, LEFT, RIGHT, QUIT, ENTREE } ACTION;
-
-typedef struct board {
-    char* grid;
-    int w;
-    int h;
-} board;
-
-typedef struct line {
-    char data[TEXT_SIZE];
-    int cursor;
-} line;
-
-typedef struct pos {
-    int x;
-    int y;
-} pos;
 
 void setup_board(board* board) {
+    srand(time(NULL));
     int lines; int columns;
     getmaxyx(stdscr,lines,columns);
     board->h = lines - 2 - 1; // 2 rows reserved for border, 1 row for chat
     board->w = columns - 2; // 2 columns reserved for border
     board->grid = calloc((board->w)*(board->h),sizeof(char));
+    int x, y; 
+
+    for (x = 0; x < board->w; x++) {    
+        for (y = 0; y < board->h; y++) {
+            if ((x%5 == 4) && (y%2 == 1) ) set_grid(board, x, y, 3);
+        }    
+    }
+    for (x = 0 ; x < board->w; x++) {   
+        if (x > 5 && (rand()*3 == 2)) set_grid(board, x, 0, 4);
+        if (x > 5 && (rand()*3 == 2)) set_grid(board, board->h, 0, 4);
+        for (y = 0 ; y < board->h; y++) {
+            if (rand()%5 == 1) set_grid(board, x, y, 4);
+        }    
+    }
+    for (y = 5 ; y < board->h; y++) {
+        if (rand()*3 == 2) set_grid(board, 0, y, 4);
+        if (rand()*3 == 2) set_grid(board, board->w, y, 4);
+    }
+
 }
 
 void free_board(board* board) {
@@ -50,8 +54,8 @@ void set_grid(board* b, int x, int y, int v) {
 void refresh_game(board* b, line* l) {
     // Update grid
     int x,y;
-    for (y = 0; y < b->h; y++) {
-        for (x = 0; x < b->w; x++) {
+    for (y = 0; y < b->h+2; y++) {
+        for (x = 0; x < b->w+2; x++) {
             char c;
             switch (get_grid(b,x,y)) {
                 case 0:
@@ -59,6 +63,15 @@ void refresh_game(board* b, line* l) {
                     break;
                 case 1:
                     c = 'O';
+                    break;
+                case 2:
+                    c = 'B';
+                    break;
+                case 3 :
+                    c = 'I';
+                    break;
+                case 4 : 
+                    c = 'D';
                     break;
                 default:
                     c = '?';
@@ -68,13 +81,14 @@ void refresh_game(board* b, line* l) {
         }
     }
     for (x = 0; x < b->w+2; x++) {
-        mvaddch(0, x, '-');
-        mvaddch(b->h+1, x, '-');
+        mvaddch(0, x, '-'); // mur en haut
+        mvaddch(b->h+1, x, '-'); // mur en bas
     }
     for (y = 0; y < b->h+2; y++) {
-        mvaddch(y, 0, '|');
-        mvaddch(y, b->w+1, '|');
+        mvaddch(y, 0, '|'); // mur à gauche
+        mvaddch(y, b->w+1, '|'); // mur à droite
     }
+    
     // Update chat text
     attron(COLOR_PAIR(1)); // Enable custom color 1
     attron(A_BOLD); // Enable bold
@@ -112,15 +126,16 @@ ACTION control(line* l, int sock_TCP, uint16_t *rep_serv) {
             a = UP; break;
         case KEY_DOWN:
             a = DOWN; break;
+        case ')':
+            a = BOMB; break;
         case '~':
             a = QUIT; break;
         case KEY_BACKSPACE:
             if (l->cursor > 0) l->cursor--;
             break;
         case 10:  
-            printf("entrée cliquée\n");
             messageTchatClient(sock_TCP, rep_serv, tabulation, l->data, strlen(l->data)); 
-            memset(l->data, 0, sizeof(l->data)); break;
+            memset(l->data, 0, sizeof(l->data)); l->cursor = 0; break;
         case 9:
            tabulation = tabulation == 8 ? 7 : 8; break;
         default:
@@ -132,7 +147,10 @@ ACTION control(line* l, int sock_TCP, uint16_t *rep_serv) {
     return a;
 }
 
-bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 serv_dest) {
+bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 serv_dest, line *l) {
+    pthread_t thread_bomb;
+    arg_thread_bomb *args;
+
     int xd = 0;
     int yd = 0;
     switch (a) {
@@ -144,14 +162,43 @@ bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, st
             xd = 0; yd = -1; actions(0, buf, sock_UDP, serv_dest);  break;
         case DOWN:
             xd = 0; yd = 1; actions(2, buf, sock_UDP, serv_dest);  break; 
+        case BOMB : 
+            args = malloc(sizeof(arg_thread_bomb));  // Allocation dynamique
+            if (!args) {
+                perror("Allocation dynamique échouée");
+                exit(EXIT_FAILURE);
+            }
+            memset(args, 0, sizeof(arg_thread_bomb));
+            args->x = p->x;
+            args->y = p->y;
+            args->b = b;
+            args->l = l;
+            // printf("x : %d ; y : %d\n", args->x, args->y);
+            if (pthread_create(&thread_bomb, NULL,(void *)explode_bomb, (void *)args) < 0) {
+                perror("Création thread");
+                free(args->b);
+                free(args);
+                exit(EXIT_FAILURE);
+            }
+            actions(4, buf, sock_UDP,serv_dest); 
+            set_grid(b,p->x,p->y,2) ; 
+            return false;
         case QUIT:
             return true;
         default: break;
     }
-    p->x += xd; p->y += yd;
-    p->x = (p->x + b->w)%b->w;
-    p->y = (p->y + b->h)%b->h;
-    set_grid(b,p->x,p->y,1);
+    if ((get_grid(b, p->x + xd, p->y + yd) == 3) // si le joueur avance sur un mur ou en dehors du jeu
+    || (get_grid(b, p->x + xd, p->y + yd) == 4) 
+    || p->x + xd < 0 || p->y + yd < 0 
+    || p->x + xd >= b->w || p->y + yd >= b->h) {
+        actions(5, buf, sock_UDP,serv_dest); set_grid(b,p->x,p->y,5) ; return false;
+    }
+    else {
+        if(get_grid(b,p->x,p->y) != 2) set_grid(b, p->x,p->y,0);
+        p->x += xd; p->y += yd;
+    }
+
+    if (get_grid(b,p->x,p->y) != 2) set_grid(b,p->x,p->y, 1);
     return false;
 }
 
@@ -182,9 +229,14 @@ int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 
     p->y *= (b->h - 1);
     //printf("x = %d, y = %d\n", p->x, p->y);
     //exit(0);
+         pthread_t tchat;
+        if (pthread_create(&tchat, NULL, (void *)reception_tchat, (void *)&sock_TCP) < 0){
+            perror("pthread_create failed");
+            exit(1);
+    }
     while (true) {
         ACTION a = control(l, sock_TCP, rep_serv);
-        if (perform_action(b, p, a, rep_serv, sock_UDP, serv_dest)) break;
+        if (perform_action(b, p, a, rep_serv, sock_UDP, serv_dest, l)) break;
         refresh_game(b,l);
         usleep(30*1000);
     }

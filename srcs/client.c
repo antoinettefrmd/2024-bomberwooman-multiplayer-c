@@ -105,8 +105,6 @@ int main (int argc, const char *argv[]) {
     u_int16_t portMDIFF = ntohs(reponse_serveur[2]); /* numéro de port sur lequel le serveur multidiffusera ses messages aux joueurs */
     printf("codereq: %u\n id: %u\n eq: %u\n portUDP: %u\n portMDIFF: %u\n adresseMultiDif : %s\n", codereq, id, eq, portUDP, portMDIFF, adrmdif); 
    
-    //abonnementMultidiff(portMDIFF,adrmdif);
-   
     int sock_UDP = socket(PF_INET6, SOCK_DGRAM, 0);
     if (sock_UDP < 0){ perror("socket failure"); }
 
@@ -118,11 +116,15 @@ int main (int argc, const char *argv[]) {
         return -1;
     }
     servadr_dest.sin6_port = htons(portUDP);
+    
+    //ncurses(reponse_serveur, sock_UDP, sock, servadr_dest);
+    abonnementMultidiff(portMDIFF, adrmdif, sock, sock_UDP, reponse_serveur, servadr_dest);
+    printf("appel reception tchat");
+    
 
-     ncurses(reponse_serveur, sock_UDP, sock, servadr_dest);
-    char buf[25];
-    sprintf(buf, "coucou ça fonctionne !");
-    if (sendto(sock_UDP, buf , strlen(buf), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest))< 0) { printf("sendto failed\n");return -1; }
+    //char buf[25];
+    //sprintf(buf, "coucou ça fonctionne !");
+    //if (sendto(sock_UDP, buf , strlen(buf), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest))< 0) { printf("sendto failed\n");return -1; }
 
    close(sock_UDP);
     close(sock);
@@ -145,20 +147,23 @@ void actions(int a, u_int16_t *buf, int sock_UDP, struct sockaddr_in6 servadr_de
     u_int16_t move_1;
 
     if (ntohs(buf[0] & 0xFF00) == 9)
-        move[0] = header(5, (buf[0] >> 13) & 0x3, (buf[0] >> 15) & 0x1);
+        move[0] = header(5, (buf[0] >> 13) & 0x7, (buf[0] >> 15) & 0x1);
     else
-        move[0] =  header(5, (buf[0] >> 13) & 0x3, 0);        
+        move[0] =  header(5, (buf[0] >> 13) & 0x7, 0);        
 
     move_1 = 0;
     move_1 |= (u_int16_t)((n_move % (int)pow(2, 13)) & 0x1FFF); // le numéro est également codé sur 12 bits
     n_move++;
-    move_1 |= (u_int16_t)((a & 0x3) << 13); // action est placé sur le bit 13
+    move_1 |= (u_int16_t)((a & 0x7) << 13); // action est placé sur le bit 13
     move[1] = htons(move_1); // les deux octets sont mis au format big endian
     if (sendto(sock_UDP, move, sizeof(move), 0, (struct sockaddr *)&servadr_dest, sizeof(servadr_dest)) < 0) {exit (0);}
 
 }
 
-void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif){
+void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP,int sock_UDP, uint16_t *rep_serv, struct sockaddr_in6 serv_dest){
+    (void)sock_UDP;
+    (void)rep_serv;
+    (void)serv_dest;
 
     /* le client doit s'abonner à l'adresseMultiDiff de multidiffusion */
     int sockMdifClient = socket(AF_INET6, SOCK_DGRAM,0);
@@ -201,8 +206,21 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif){
         exit(EXIT_FAILURE);
     }
     printf("abonnement OK\n");
-    
-   char buf[SIZE_MESS];
+   
+    int paquets_envoyes = 0;
+    int res_send = 0;
+    char ready[6];
+    strcpy(ready, "ready");    
+    while ((size_t)paquets_envoyes < sizeof(ready)) {
+        res_send = send(sock_TCP, ready, sizeof(ready), 0);
+        if (res_send == -1) {
+            perror("Erreur lors de l'envoi du message");
+            exit(EXIT_FAILURE);
+        }
+        if (res_send == 0) break;
+        paquets_envoyes += res_send;  
+    }    
+    char buf[SIZE_MESS];
     ssize_t paquet_recu;
     size_t octets_recus = 0;
 
@@ -217,35 +235,39 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif){
             exit(EXIT_FAILURE); // Sortie en cas d'erreur de réception.
         }
 
-        printf("Message reçu du serveur: %.*s\n", (int)paquet_recu, buf);
+        printf("Message reçu du serveur: %s\n",buf);
+        if(strcmp(buf,"La partie peut commencer !!") == 0 ){
+           ncurses(rep_serv, sock_UDP, sock_TCP, serv_dest);
+        }
     }
+    printf("après le while abonnementMDiff\n");
     close(sockMdifClient);
 }
 
-/* méthode formatage d'un message du tchat*/
+/* méthode formatage d'un message du tchat */
 u_int16_t* tchat_format(int codereq, int id, int eq, int len, char * data) {
     
     u_int16_t *tchat = malloc((2 + (len / 2)) * sizeof(u_int16_t));
 
-  //  u_int16_t tchat[2 + (len / 2)]; // comme chaque caractère est sur un octet, on divise par deux
-                                    //le nombre de lignes de 16 bits à remplir
-    u_int16_t tchat_1;
-    u_int16_t tchat_i;
+   // u_int16_t tchat_1;
+    //u_int16_t tchat_i;
     int j = 1;
 
     tchat[0] = header(codereq, id, eq); // on place le header sur la première ligne
-
-    tchat_1 = 0;
-    tchat_1 |= (u_int16_t)(len & 0xFF); // le champ data est codé sur 8 bits (FF est le masque hexa pour 11111111)
-    tchat_1 |= (u_int16_t)((data[0]) << 8); // le premier caractère est placé sur le bit 8
-    tchat[1] = htons(tchat_1); // les deux octets sont au format big endiant
+    tchat[1] = (len << 8) | (data[0] & 0xFF);
+    // tchat_1 = 0;
+    // tchat_1 |= (u_int16_t)(len & 0xFF); // le champ data est codé sur 8 bits (FF est le masque hexa pour 11111111)
+    // tchat_1 |= (u_int16_t)((data[0]) << 8); // le premier caractère est placé sur le bit 8
+    // tchat[1] = htons(tchat_1); // les deux octets sont au format big endiant
     for (int i = 2; i < 2 + (len / 2); i++) { // on boucle sur le message
-        tchat_i = 0;
-        tchat_i |= (u_int16_t)(data[j] & 0xFF); // chaque caractère est codé sur un octet
-        if (i != len - 1 || len % 2 == 1)
-            tchat_i |= (u_int16_t)((data[j + 1] & 0xFF) << 8); // le prochain caractère rempli le second octet
-        j += 2;
-        tchat[i] = tchat_i; // puis on place les deux octets sur la ligne d'indice i
+        tchat[i] = (data[j] << 8) | (data[j + 1] & 0xFF);
+        j+= 2; 
+        // tchat_i = 0;
+        // tchat_i |= (u_int16_t)(data[j] & 0xFF); // chaque caractère est codé sur un octet
+        // if (i != len - 1 || len % 2 == 1)
+        //     tchat_i |= (u_int16_t)((data[j + 1] & 0xFF) << 8); // le prochain caractère rempli le second octet
+        // j += 2;
+        // tchat[i] = tchat_i; // puis on place les deux octets sur la ligne d'indice i
     }
     return tchat;
 }
@@ -260,36 +282,94 @@ void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char dat
     u_int16_t codereq = ntohs(buf[0]) & 0x1FFF;
     u_int16_t id = (ntohs(buf[0]) >> 13) & 0x3;
     u_int16_t eq = (ntohs(buf[0]) >> 15) & 0x1;
-    printf("message: %s\n",data);
 
-    if (codereq == 9) { // si on est en mode 4 joueurs tabulation est forcément égal à 7
+    // C'est valeur = (hauteur << 8) | largeur
+   
+
+    if (codereq == 9) // si on est en mode 4 joueurs tabulation est forcément égal à 7
        tabulation = 7;
-    }
     
     u_int16_t *message = tchat_format(tabulation, id, eq, len, data);
+    size_t taille_message = ((len / 2)+2) * sizeof(u_int16_t);
     
-    int paquets_envoyes = 0; 
-    int res_send;
-    size_t taille_message = (2 + (len / 2)) * sizeof(u_int16_t);
+    printf("Longueur : %d\n", len);
 
-    int mess_len = len;
-    if (send(sock_TCP, &mess_len, sizeof(int), MSG_NOSIGNAL | MSG_DONTWAIT) < 0){
-        perror("send1");
+    if (send(sock_TCP, &len, sizeof(len), 0) < 0) {
+        perror("send length");
+        free(message);
         exit(EXIT_FAILURE);
     }
-    while ((size_t)paquets_envoyes < sizeof(taille_message)) {
 
-        res_send = send(sock_TCP, message, sizeof(taille_message - paquets_envoyes), 0);
-       
-       if (res_send == -1) {
+    int paquets_envoyes = 0; 
+    int res_send;
+    
+    while ((size_t)paquets_envoyes < taille_message){
+
+        res_send = send(sock_TCP, message + paquets_envoyes, taille_message - paquets_envoyes, 0);
+
+        if (res_send == -1) {
             perror("Erreur lors de l'envoi du message");
             exit(EXIT_FAILURE);
         }
-        if (res_send == 0) break;
-        paquets_envoyes += res_send;  
+        if (res_send == 0)
+            break;
+        paquets_envoyes += res_send;
+    }
+    printf("paquets : %d",paquets_envoyes);
+    printf("Envoi au serveur OK\n");
+
+    free(message);
+}
+
+int reception_tchat (int *sock){
+    
+    while (1) {
+        int len_recu;
+        int octets_recus = 0;
+        int recu = 0;
+            while ((size_t)octets_recus < sizeof(5)) {
+                recu = recv(*sock, &len_recu, sizeof(len_recu), 0);
+                if (recu < 0){
+                    perror("recv len failed");
+                    exit(EXIT_FAILURE);
+                }
+                octets_recus += recu;
+            }
+
+        u_int16_t taille_message = ((len_recu / 2) + 2) * sizeof(u_int16_t);
+        u_int16_t *message = malloc(taille_message);
+        if (!message) {
+            perror("malloc failed");
+            return -1;
+        }
+        printf("len recu = %d\n", len_recu);
+
+        printf("taille : %d\n",taille_message);
+        int paquets_recu = 0;
+        int res_recv;
+        while (paquets_recu < taille_message) {
+            printf("je boucle\n");
+            res_recv = recv(*sock, message + paquets_recu, taille_message - paquets_recu, 0);
+
+            if (res_recv == -1){
+                perror("Erreur lors de la reception du message TCP");
+                free(message);
+                exit(EXIT_FAILURE);
+            }
+            if (res_recv == 0) break;
+
+            paquets_recu += res_recv;
+            printf("paquets recus client : %d\n", paquets_recu);
+        }
+
+        printf("message %c", (message[1] & 0xFF));
+        for (int i = 2; i < len_recu / 2 + 2 ; i++ ) {
+            printf("%c", (char)((message[i]) >> 8));
+            printf("%c", (char)(message[i] & 0xFF));
+        }
+
+        printf("\n");
     }
 
-    printf("envoie tchat OK\n");
-   
-    free(message);
+    return 0;
 }

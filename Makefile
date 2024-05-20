@@ -29,7 +29,7 @@ WHITE		=	\033[0;97m
  
 SRC_FILES	=	main serveur_partie
 
-CLIENT_FILES =  client ncurses
+CLIENT_FILES =  client ncurses ncurses_utils
 
 
 
@@ -70,7 +70,6 @@ clean:
 fclean:		clean
 			@$(RM) $(NAME)
 			@$(RM) $(NAME_C)
-			@$(SMAKE) -C $(LIBFT) fclean
 			@echo "$(CYAN)$(NAME) executable files cleaned!$(DEF_COLOR)"
 			@echo "$(CYAN)$(NAME_C) executable files cleaned!$(DEF_COLOR)"
 
