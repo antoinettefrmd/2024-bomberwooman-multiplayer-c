@@ -16,3 +16,6 @@ Dans un second terminal, entrez la commande :
 
 suivi de l'argument 2 ou 4 pour une partie à 2 contre 2 ou 4 adversaires.
 
+Ce projet ne respecte pas tout le cahier des charges 
+Sur la branche main : Tchat fonctionnel
+Sur la branche bombe : Envoi de la grille
