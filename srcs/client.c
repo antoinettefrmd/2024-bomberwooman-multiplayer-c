@@ -234,8 +234,8 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP,int 
             exit(EXIT_FAILURE); // Sortie en cas d'erreur de réception.
         }
         if(strcmp(buf,"La partie peut commencer !") == 0 || strcmp(buf,"La partie peut commencer !s") == 0 ){
+            
             break;
-            // ncurses(rep_serv, sock_UDP, sock_TCP, serv_dest, NULL);
         }
         printf("%s\n",buf);
     }

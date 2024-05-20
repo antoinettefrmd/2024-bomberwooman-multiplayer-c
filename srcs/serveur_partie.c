@@ -327,21 +327,22 @@ int serveur(partie_t *p) {
                 exit(EXIT_FAILURE);
             }
             envoyes += tailleEnvoie;
-        }
-    }    
-    //initialisation du board
-    struct board *b = malloc(sizeof(board));
-    setup_board(b);
-
-    u_int16_t *format_msg_grille = grille_format(NUM_MSG, b);
-
-
-    ssize_t tailleEnvoie = sendto(p->sock_serv_MDIF, format_msg_grille, sizeof(u_int16_t)*400, 0, (struct sockaddr *)&p->adresse_serv_MDIF, sizeof(p->adresse_serv_MDIF));
-    if (tailleEnvoie < 0) {
-        perror("Erreur lors de l'envoi du message");
-        close(p->sock_serv_MDIF);
-        exit(EXIT_FAILURE);
+        }   
     }
+        //initialisation du board
+        struct board *b = malloc(sizeof(board));
+        setup_board(b);
+
+        uint16_t test[3 + 10*25];
+        grille_format(NUM_MSG, test, b);
+
+
+        ssize_t tailleEnvoie = sendto(p->sock_serv_MDIF, test, sizeof(u_int16_t)*400, 0, (struct sockaddr *)&p->adresse_serv_MDIF, sizeof(p->adresse_serv_MDIF));
+        if (tailleEnvoie < 0) {
+            perror("Erreur lors de l'envoi du message");
+            close(p->sock_serv_MDIF);
+            exit(EXIT_FAILURE);
+        }
 
     printf("Envoie OK\n");
     return 0;
@@ -355,14 +356,6 @@ void set_grid(board* b, int x, int y, int v) {
     b->grid[y*b->w + x] = v;
 }
 
-void print_board(board* b) {
-    for (int y = 0; y < b->h; y++) {
-        for (int x = 0; x < b->w; x++) {
-            printf("%c", get_grid(b, x, y));
-        }
-        printf("\n");
-    }
-}
 
 void setup_board(board* board) {
     // initscr(); /* Start curses mode */
@@ -375,11 +368,11 @@ void setup_board(board* board) {
 
 
     int x, y; 
-    // for (x = 0; x < board->w; x++) {    
-    //     for (y = 0; y < board->h; y++) {
-    //         set_grid(board, x, y, 0);
-    //     }    
-    // }
+    for (x = 0; x < board->w; x++) {    
+        for (y = 0; y < board->h; y++) {
+            set_grid(board, x, y, 0);
+        }    
+    }
 
     // Position des murs indestructibles
     for (x = 0; x < board->w; x++) {    
@@ -418,35 +411,38 @@ u_int16_t header(int codereq, int id, int eq) {
     return (htons(res)); // le tout est ensuite mis au format big endian
 }
 
-u_int16_t *grille_format(int num,  board *b) {
+void grille_format(int num,  u_int16_t  *test ,board *b) {
     // int size = (b->h * b->w / 2) + 3;
-    int size = (10*225 + 3); 
+    int size = 1024; 
     if((b->h * b->w) % 2 == 1) {
         size++;
     }
-    u_int16_t *header = malloc(sizeof(u_int16_t) * size);
-    if (header == NULL) {
-        fprintf(stderr, "header : erreur d'allocation de mémoire\n");
-        exit(EXIT_FAILURE);
-    }
+    // printf("avant h\n");
+    // u_int16_t *header ;
+    // header = malloc(sizeof(uint16_t) * size);
+    //     printf("après h\n");
+    // if (header == NULL) {
+    //     fprintf(stderr, "header : erreur d'allocation de mémoire\n");
+    //     exit(EXIT_FAILURE);
+    // }
 
-    memset(header, 0, sizeof(u_int16_t)*size);
+    // memset(header, 0, sizeof(u_int16_t)*size);
 
-    header[0] |= (u_int16_t)(11 & 0x1FFF);
+    test[0] |= (u_int16_t)(11 & 0x1FFF);
 
-    header[0] |= (u_int16_t)((0 & 0x3) << 13);
+    test[0] |= (u_int16_t)((0 & 0x3) << 13);
 
-    header[0] |= (u_int16_t)((0 & 0x1) << 15);
+    test[0] |= (u_int16_t)((0 & 0x1) << 15);
 
-    header[1] |= (u_int16_t)(num & 0xFFFF);
+    test[1] |= (u_int16_t)(num & 0xFFFF);
 
-    header[2] |= (u_int16_t)(b->h & 0xFF);
+    test[2] |= (u_int16_t)(b->h & 0xFF);
 
-    header[2] |= (u_int16_t)((b->w & 0xFF) << 8);
+    test[2] |= (u_int16_t)((b->w & 0xFF) << 8);
 
-    header[0] = htons(header[0]);
-    header[1] = htons(header[1]);
-    header[2] = htons(header[2]);
+    test[0] = htons(test[0]);
+    test[1] = htons(test[1]);
+    test[2] = htons(test[2]);
 
     int k = 3;
 
@@ -454,16 +450,16 @@ u_int16_t *grille_format(int num,  board *b) {
         for(int j = 0; j < b->h; j++) {
             int tmp = get_grid(b, i, j);
             if((i + j) % 2 == 0) {
-                header[k] |= (u_int16_t)(tmp & 0xFF);
+                test[k] |= (u_int16_t)(tmp & 0xFF);
             }
             else {
-                header[k] |= (u_int16_t)((tmp & 0xFF) << 8);
-                header[k] = htons(header[k]);
+                test[k] |= (u_int16_t)((tmp & 0xFF) << 8);
+                test[k] = htons(test[k]);
                 k++;
             }
         }
     }
-    return header;
+    // return header;
 }
 
 void handle_tchat_serveur (int sock_TCP){

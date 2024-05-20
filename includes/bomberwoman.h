@@ -64,7 +64,7 @@ u_int16_t* tchat_format(int codereq, int id, int eq, int len, char * data);
 void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char data[], int len);
 
 int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 serv_dest, board * b);
-u_int16_t *grille_format(int num, board *board);
+void grille_format(int num,  u_int16_t  *test ,board *b);
 
 int client_thread(arg_thread_t *args);
 
