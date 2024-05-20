@@ -329,7 +329,7 @@ int reception_tchat (int *sock){
             paquets_recu += res_recv;
         }
 
-        printf("%c", (message[1] & 0xFF));
+        printf(" %c", (message[1] & 0xFF));
         for (int i = 2; i < len_recu / 2 + 2 ; i++ ) {
             printf("%c", (char)((message[i]) >> 8));
             printf("%c", (char)(message[i] & 0xFF));
