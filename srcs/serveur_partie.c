@@ -378,13 +378,23 @@ void handle_tchat_serveur (int sock_TCP, partie_t *p){
     u_int16_t codereq = ntohs(message[0]) & 0x1FFF;
    
     printf("codereq %u\n",codereq);
+   // u_int16_t len = (ntohs(message[1] & 0xFF));
+   // printf("len = %u\n", len);
 
     if (codereq == 7) { // envoyé à tout le monde
 
-      int paquets_envoyes = 0; 
       int res_send;
+      int paquets_envoyes;
+      printf("nb joueurs courant = %d\n", p->nb_joueurs_courant);
     
         for (int i = 0; i < p-> nb_joueurs_courant; i++){
+            
+             if (send(p->joueurs[i]->sock_client, &len_recu, sizeof(len_recu), 0) < 0) {
+                perror("send length");
+                free(message);
+                exit(EXIT_FAILURE);
+            }
+             paquets_envoyes = 0; 
             while (paquets_envoyes < taille_message){
                 res_send = send(p->joueurs[i]->sock_client, message + paquets_envoyes, taille_message - paquets_envoyes, 0);
 
@@ -395,11 +405,13 @@ void handle_tchat_serveur (int sock_TCP, partie_t *p){
                 if (res_send == 0) break;
                 paquets_envoyes += res_send;
             }
-        }    
+                printf("je boucle\n");
+        }
+        printf("post for\n");
     } else { // envoie uniquement à l'équipier
         int equipe = (ntohs(message[0]) >> 15) & 0x1;
         printf("equipe %d\n", equipe);
-        int sock_client = 0;
+        
 
         int paquets_envoyes = 0; 
         int res_send;
@@ -408,7 +420,7 @@ void handle_tchat_serveur (int sock_TCP, partie_t *p){
             if( p->joueurs[i]->id_equipe == equipe){
 
                 while (paquets_envoyes < taille_message){
-                    res_send = send(sock_client, message + paquets_envoyes, taille_message - paquets_envoyes, 0);
+                    res_send = send(p->joueurs[i]->sock_client, message + paquets_envoyes, taille_message - paquets_envoyes, 0);
 
                     if (res_send == -1) {
                         perror("Erreur lors de l'envoi du message");

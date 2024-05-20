@@ -121,11 +121,6 @@ int main (int argc, const char *argv[]) {
     abonnementMultidiff(portMDIFF, adrmdif, sock, sock_UDP, reponse_serveur, servadr_dest);
     printf("appel reception tchat");
     
-    pthread_t tchat;
-    if (pthread_create(&tchat, NULL, (void *)reception_tchat, (void *)&sock) < 0){
-        perror("pthread_create failed");
-        exit(1);
-    }
 
     //char buf[25];
     //sprintf(buf, "coucou ça fonctionne !");
@@ -323,34 +318,32 @@ void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char dat
 }
 
 int reception_tchat (int *sock){
-    printf("reception tchat dans client\n");
     
-    int len_recu;
+    u_int16_t len_recu;
+    int octets_recus = 0;
     int recu = 0;
-    int octet_recu = 0;
-
-    while ((size_t)octet_recu < sizeof(5)) {
-        recu = recv(*sock, &len_recu, sizeof(len_recu), 0);
-        if (recu < 0){
-            perror("recv len failed");
-            exit(EXIT_FAILURE);
+        while ((size_t)octets_recus < sizeof(5)) {
+            recu = recv(*sock, &len_recu, sizeof(len_recu), 0);
+            if (recu < 0){
+                perror("recv len failed");
+                exit(EXIT_FAILURE);
+            }
+            octets_recus += recu;
         }
-        octet_recu += recu;
-    }
 
-    printf("Longueur du message reçue : %d\n", len_recu);
     u_int16_t *message = malloc(len_recu);
     if (!message) {
         perror("malloc failed");
         return -1;
     }
+    printf("len recu = %d\n", len_recu);
     
     int taille_message = ((len_recu / 2) + 2) * sizeof(u_int16_t);
     printf("taille : %d\n",taille_message);
     int paquets_recu = 0;
     int res_recv;
     while (paquets_recu < taille_message) {
-
+        printf("je boucle\n");
         res_recv = recv(*sock, message + paquets_recu, taille_message - paquets_recu, 0);
 
         if (res_recv == -1){
@@ -361,9 +354,17 @@ int reception_tchat (int *sock){
         if (res_recv == 0) break;
 
         paquets_recu += res_recv;
+        printf("paquets recus client : %d\n", paquets_recu);
     }
 
     printf("Reception tchat %c\n", (char)(message[1] & 0xFF));
+    // for (int i = 1; 2 < len_recu / 2; i++ ) {
+    //     if (i % 2 == 0) {
+    //         printf("%c", (char)((message[i] & 0xFF)>> 8));
+    //     }
+    //     else
+    //         printf("%c", (char)(message[i] & 0xFF));
+    // }
 
     return 0;
 }
