@@ -375,11 +375,11 @@ void setup_board(board* board) {
 
 
     int x, y; 
-    for (x = 0; x < board->w; x++) {    
-        for (y = 0; y < board->h; y++) {
-            set_grid(board, x, y, 0);
-        }    
-    }
+    // for (x = 0; x < board->w; x++) {    
+    //     for (y = 0; y < board->h; y++) {
+    //         set_grid(board, x, y, 0);
+    //     }    
+    // }
 
     // Position des murs indestructibles
     for (x = 0; x < board->w; x++) {    
@@ -406,8 +406,6 @@ void setup_board(board* board) {
     set_grid(board, 0, board->h-1, 7);
     set_grid(board, board->w-1, 0, 8);
 
-    printf("strlen grid %ld\n", strlen(board->grid));
-
 }
 
 u_int16_t header(int codereq, int id, int eq) {
@@ -421,15 +419,16 @@ u_int16_t header(int codereq, int id, int eq) {
 }
 
 u_int16_t *grille_format(int num,  board *b) {
-    int size = (b->h * b->w / 2) + 3;
+    // int size = (b->h * b->w / 2) + 3;
+    int size = (10*225 + 3); 
     if((b->h * b->w) % 2 == 1) {
         size++;
     }
     u_int16_t *header = malloc(sizeof(u_int16_t) * size);
-        if (header == NULL) {
-            fprintf(stderr, "header : erreur d'allocation de mémoire\n");
-            exit(EXIT_FAILURE);
-        }
+    if (header == NULL) {
+        fprintf(stderr, "header : erreur d'allocation de mémoire\n");
+        exit(EXIT_FAILURE);
+    }
 
     memset(header, 0, sizeof(u_int16_t)*size);
 

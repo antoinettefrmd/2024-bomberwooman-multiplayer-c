@@ -8,7 +8,7 @@
 typedef enum ACTION { NONE, UP, DOWN, LEFT, RIGHT, BOMB, QUIT, ENTREE } ACTION;
 
 typedef struct board {
-    char* grid;
+    int* grid;
     int w;
     int h;
 } board;
