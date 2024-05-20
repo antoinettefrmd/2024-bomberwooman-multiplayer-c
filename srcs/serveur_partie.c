@@ -330,32 +330,18 @@ int serveur(partie_t *p) {
         }
     }    
     //initialisation du board
-    board *b = malloc(sizeof(board));
+    struct board *b = malloc(sizeof(board));
     setup_board(b);
-    // print_board(b);
-    // printf("\n");
-    // printf("%s\n", b->grid);
-    // printf("\n");
+
+    u_int16_t *format_msg_grille = grille_format(NUM_MSG, b);
 
 
-    //envoie du board //metrre un mutex pour accéder et modifier num
-    u_int16_t *format_msg_grille = grille_format(NUM_MSG, b->h, b->w, b->grid);
-
-    ssize_t tailleEnvoie = sendto(p->sock_serv_MDIF, format_msg_grille  ,6 , 0, (struct sockaddr *)&p->adresse_serv_MDIF, sizeof(p->adresse_serv_MDIF));
+    ssize_t tailleEnvoie = sendto(p->sock_serv_MDIF, format_msg_grille, sizeof(u_int16_t)*400, 0, (struct sockaddr *)&p->adresse_serv_MDIF, sizeof(p->adresse_serv_MDIF));
     if (tailleEnvoie < 0) {
         perror("Erreur lors de l'envoi du message");
         close(p->sock_serv_MDIF);
         exit(EXIT_FAILURE);
     }
-
-
-    tailleEnvoie = sendto(p->sock_serv_MDIF, format_msg_grille, b->h*b->w, 0, (struct sockaddr *)&p->adresse_serv_MDIF, sizeof(p->adresse_serv_MDIF));
-    if (tailleEnvoie < 0) {
-        perror("Erreur lors de l'envoi du message");
-        close(p->sock_serv_MDIF);
-        exit(EXIT_FAILURE);
-    }
- 
 
     printf("Envoie OK\n");
     return 0;
@@ -379,47 +365,46 @@ void print_board(board* b) {
 }
 
 void setup_board(board* board) {
-    initscr(); /* Start curses mode */
-    srand(time(NULL));
-    int lines; int columns;
-    getmaxyx(stdscr,lines,columns);
-    board->h = lines - 2 - 1; // 2 rows reserved for border, 1 row for chat
-    board->w = columns - 2; // 2 columns reserved for border
+    // initscr(); /* Start curses mode */
+    // srand(time(NULL));
+    // int lines; int columns;
+    // getmaxyx(stdscr,lines,columns);
+    board->h = 25; // 2 rows reserved for border, 1 row for chat
+    board->w = 10; // 2 columns reserved for border
     board->grid = calloc((board->w)*(board->h),sizeof(char));
-    endwin(); /* End curses mode */
 
 
     int x, y; 
     for (x = 0; x < board->w; x++) {    
         for (y = 0; y < board->h; y++) {
-            set_grid(board, x, y, ' ');
+            set_grid(board, x, y, 0);
         }    
     }
 
     // Position des murs indestructibles
     for (x = 0; x < board->w; x++) {    
         for (y = 0; y < board->h; y++) {
-            if ((x%5 == 4) && (y%2 == 1) ) set_grid(board, x, y, '1');
+            if ((x%5 == 4) && (y%2 == 1) ) set_grid(board, x, y, 1);
         }    
     }
     // Position des murs destructibles
     for (x = 0 ; x < board->w; x++) {   
-        if (x > 5 && (x < board->w-5) && (rand()*3 == '2')) set_grid(board, x, 0, '2');
-        if (x > 5 && (x < board->w-5) && (rand()*3 == '2')) set_grid(board, x, board->h, '2');
+        if (x > 5 && (x < board->w-5) && (rand()*3 == 2)) set_grid(board, x, 0, 2);
+        if (x > 5 && (x < board->w-5) && (rand()*3 == 2)) set_grid(board, x, board->h, 2);
         for (y = 0 ; y < board->h; y++) {
-            if (rand()%5 == 1) set_grid(board, x, y, '2');
+            if (rand()%5 == 1) set_grid(board, x, y, 2);
         }    
     }
     for (y = 5 ; y < board->h; y++) {
-        if (rand()*3 == '2') set_grid(board, 0, y, '2');
-        if (rand()*3 == '2') set_grid(board, board->w, y, '2');
+        if (rand()*3 == 2) set_grid(board, 0, y, 2);
+        if (rand()*3 == 2) set_grid(board, board->w, y, 2);
     }
     
     // Position des joueurs dans la grille
-    set_grid(board, 0, 0, '5'); 
-    set_grid(board, board->w-1, board->h - 1, '6');
-    set_grid(board, 0, board->h - 1, '7');
-    set_grid(board, board->w - 1, 0, '8');
+    set_grid(board, 0, 0, 5); 
+    set_grid(board, board->w-1, board->h-1, 6);
+    set_grid(board, 0, board->h-1, 7);
+    set_grid(board, board->w-1, 0, 8);
 
     printf("strlen grid %ld\n", strlen(board->grid));
 
@@ -435,37 +420,53 @@ u_int16_t header(int codereq, int id, int eq) {
     return (htons(res)); // le tout est ensuite mis au format big endian
 }
 
-u_int16_t *grille_format(int num, int hauteur, int largeur, char *plateau) {
-    u_int16_t *grille = malloc((3 + (hauteur * largeur) / 2)*sizeof(uint16_t));
-    memset(grille, 0, sizeof(u_int16_t));
-    
-    u_int16_t grille_2;
-    u_int16_t grille_i;
+u_int16_t *grille_format(int num,  board *b) {
+    int size = (b->h * b->w / 2) + 3;
+    if((b->h * b->w) % 2 == 1) {
+        size++;
+    }
+    u_int16_t *header = malloc(sizeof(u_int16_t) * size);
+        if (header == NULL) {
+            fprintf(stderr, "header : erreur d'allocation de mémoire\n");
+            exit(EXIT_FAILURE);
+        }
 
-    grille[0] = header(11, 0, 0); // le header est placé sur la première ligne
-    grille[1] = htons(num % (int) pow(2, 16)); // le numéro du message modulo 2^16 occupe la deuxième au format big endian
+    memset(header, 0, sizeof(u_int16_t)*size);
 
-    grille_2 = ((hauteur << 8) | largeur);
+    header[0] |= (u_int16_t)(11 & 0x1FFF);
 
-    grille[2] = grille_2;
+    header[0] |= (u_int16_t)((0 & 0x3) << 13);
 
-    //on parcourt la grille
-    for (int x = 0; x < hauteur; x++) {
-        for (int y = 0; y < largeur; y++) {
-            if ((y % 2) == 0) { // si on est sur un premier octet de ligne, on incrémente i puis on 
-                                              // réinitalise les deux octets avant de placer la case du plateau sur le premeir
-                grille_i = 0;
-                grille_i |= (u_int16_t)((plateau[x*largeur+y] & 0xFF) << 8);
+    header[0] |= (u_int16_t)((0 & 0x1) << 15);
+
+    header[1] |= (u_int16_t)(num & 0xFFFF);
+
+    header[2] |= (u_int16_t)(b->h & 0xFF);
+
+    header[2] |= (u_int16_t)((b->w & 0xFF) << 8);
+
+    header[0] = htons(header[0]);
+    header[1] = htons(header[1]);
+    header[2] = htons(header[2]);
+
+    int k = 3;
+
+    for(int i = 0; i < b->w; i++) {
+        for(int j = 0; j < b->h; j++) {
+            int tmp = get_grid(b, i, j);
+            if((i + j) % 2 == 0) {
+                header[k] |= (u_int16_t)(tmp & 0xFF);
             }
-            else { // sinon on ajoute la case du plateau sur le second octet de la ligne
-                grille_i |= (u_int16_t)(plateau[x*largeur + y] & 0xFF);
-                grille[2+x] = grille_i;
+            else {
+                header[k] |= (u_int16_t)((tmp & 0xFF) << 8);
+                header[k] = htons(header[k]);
+                k++;
             }
-            printf("%c", (plateau[x*largeur+y]));
         }
     }
-    return grille;
+    return header;
 }
+
 void handle_tchat_serveur (int sock_TCP){
 
     fd_set rset;
