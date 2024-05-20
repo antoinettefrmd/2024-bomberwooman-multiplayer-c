@@ -243,7 +243,12 @@ int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 
     //         perror("pthread_create failed");
     //         exit(1);
     // }
-        printf("je suis pas laaa\n");
+
+    // for(int i = 0 ; i < 10*25 ; i++)
+    // {
+    //     if (i%25==0) printf("\n");
+    //     printf("%d", b->grid[i]);
+    // }    
     while (true) {
         ACTION a = control(l, sock_TCP, rep_serv);
         if (perform_action(b, p, a, rep_serv, sock_UDP, serv_dest, l)) break;

@@ -259,8 +259,8 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP,int 
     // int num = (ntohs(header[1])) & 0xFFFF;
 
     int *grille = malloc(sizeof(int) * 25*10 +1);
-    int hauteur = ntohs(header[2]) & 0xFF;
-    int largeur = (ntohs(header[2]) >> 8) & 0xFF;
+    int largeur = ntohs(header[2]) & 0xFF;
+    int hauteur = (ntohs(header[2]) >> 8) & 0xFF;
     int size = (((largeur) * (hauteur)) % 2 == 0) ? (((largeur) * (hauteur)) / 2) + 3 : (((largeur) * (hauteur)) / 2) + 4;
     int i = 0;
     int k;
@@ -282,18 +282,17 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP,int 
     // else if(codereq == 12) {
     //     int nb = (ntohs(header[2])) & 0xFF;
     // }
-    // for(int i = 0 ; i < 10*25 ; i++)
-    // {
-    //     if (i%25==0) printf("\n");
-    //     printf("%d", grille[i]);
-    // }
+    for(int i = 0 ; i < 10*25 ; i++)
+    {
+        if (i%25==0) printf("\n");
+        printf("%d", grille[i]);
+    }
     printf("\n");
     board *b = malloc(sizeof(board));
     memset(b,0,sizeof(board));
     b->h = hauteur;
     b->w = largeur;
-    b->grid = (char *)grille;
-    printf("j'appelle ncurse au 06 \n");
+    b->grid = grille;
     ncurses(rep_serv, sock_UDP, sock_TCP, serv_dest, b);
     // }
     // printf("largeur : %d ; hauteur : %d ; grille : %s\n", largeur, hauteur);
