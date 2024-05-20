@@ -1,12 +1,12 @@
 # Variables
 
 NAME		= bomberwoman
+NAME_C		= client
 INCLUDE		= includes
-LIBFT		= libft
 SRC_DIR		= srcs/
 OBJ_DIR		= objects/
 CC			= cc
-CFLAGS		= -Wall -Wextra -Werror
+CFLAGS		= -Wall -Wextra -Werror 
 RM			= rm -f
 SMAKE		= make --no-print-directory
 
@@ -26,25 +26,33 @@ BLUE		=	\033[0;94m
 MAGENTA		=	\033[0;95m
 CYAN		=	\033[0;96m
 WHITE		=	\033[0;97m
+ 
+SRC_FILES	=	main serveur_partie
 
-SRC_FILES	=
+CLIENT_FILES =  client ncurses ncurses_utils
+
 
 
 SRC			=	$(addprefix $(SRC_DIR), $(addsuffix .c, $(SRC_FILES)))
 OBJ			=	$(addprefix $(OBJ_DIR), $(addsuffix .o, $(SRC_FILES)))
 
+CLIENT		=	$(addprefix $(SRC_DIR), $(addsuffix .c, $(CLIENT_FILES)))
+OBJ_C		=	$(addprefix $(OBJ_DIR), $(addsuffix .o, $(CLIENT_FILES)))
+
 ###
 
 OBJF		=	.cache_exists
 
-all:		$(NAME)
+all:		$(NAME) $(NAME_C)
 
 
 $(NAME):	$(OBJ)
-			@$(SMAKE) -C $(LIBFT)
-			@$(CC) $(OBJ) -L $(LIBFT) -lft -lreadline -o $(NAME)
+			@$(CC) $(OBJ) -pthread -lncurses -o $(NAME)
 			@echo "$(GREEN)$(BOLD)$(NAME) compiled!$(DEF_COLOR)"
 
+$(NAME_C):	$(OBJ_C)
+			@$(CC) $(OBJ_C) -pthread -lncurses -o $(NAME_C)
+			@echo "$(GREEN)$(MAGENTA)$(NAME_C) compiled!$(DEF_COLOR)"
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c | $(OBJF)
 			@echo "\033[1A                                                     "
@@ -61,11 +69,11 @@ clean:
 
 fclean:		clean
 			@$(RM) $(NAME)
-			@$(RM) $(NAME_B)
-			@$(SMAKE) -C $(LIBFT) fclean
+			@$(RM) $(NAME_C)
 			@echo "$(CYAN)$(NAME) executable files cleaned!$(DEF_COLOR)"
+			@echo "$(CYAN)$(NAME_C) executable files cleaned!$(DEF_COLOR)"
 
 re:			fclean all
 
-.PHONY:		all clean fclean re norm bonus
+.PHONY:		all clean fclean re bonus
 
