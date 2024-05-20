@@ -10,7 +10,9 @@
 
 static int tabulation = 7; // destiné à tous les joueurs
 
-
+void free_board(board* board) {
+    free(board->grid);
+}
 void setup_board(board* board) {
     srand(time(NULL));
     int lines; int columns;
@@ -39,10 +41,6 @@ void setup_board(board* board) {
 
 }
 
-void free_board(board* board) {
-    free(board->grid);
-}
-
 int get_grid(board* b, int x, int y) {
     return b->grid[y*b->w + x];
 }
@@ -62,16 +60,28 @@ void refresh_game(board* b, line* l) {
                     c = ' ';
                     break;
                 case 1:
-                    c = 'O';
-                    break;
-                case 2:
-                    c = 'B';
-                    break;
-                case 3 :
                     c = 'I';
                     break;
-                case 4 : 
+                case 2:
                     c = 'D';
+                    break;
+                case 3 :
+                    c = 'B';
+                    break;
+                case 4 : 
+                    c = 'E';
+                    break;
+                case 5 : 
+                    c = '0';
+                    break;
+                case 6 : 
+                    c = '1';
+                    break;
+                case 7 : 
+                    c = '2';
+                    break;
+                case 8 : 
+                    c = '3';
                     break;
                 default:
                     c = '?';
@@ -181,24 +191,24 @@ bool perform_action(board* b, pos* p, ACTION a, u_int16_t *buf, int sock_UDP, st
                 exit(EXIT_FAILURE);
             }
             actions(4, buf, sock_UDP,serv_dest); 
-            set_grid(b,p->x,p->y,2) ; 
+            set_grid(b,p->x,p->y,4); 
             return false;
         case QUIT:
             return true;
         default: break;
     }
-    if ((get_grid(b, p->x + xd, p->y + yd) == 3) // si le joueur avance sur un mur ou en dehors du jeu
-    || (get_grid(b, p->x + xd, p->y + yd) == 4) 
+    if ((get_grid(b, p->x + xd, p->y + yd) == 1) // si le joueur avance sur un mur ou en dehors du jeu
+    || (get_grid(b, p->x + xd, p->y + yd) == 2) 
     || p->x + xd < 0 || p->y + yd < 0 
     || p->x + xd >= b->w || p->y + yd >= b->h) {
-        actions(5, buf, sock_UDP,serv_dest); set_grid(b,p->x,p->y,5) ; return false;
+        actions(5, buf, sock_UDP,serv_dest); set_grid(b,p->x,p->y,9) ; return false;
     }
     else {
-        if(get_grid(b,p->x,p->y) != 2) set_grid(b, p->x,p->y,0);
+        if(get_grid(b,p->x,p->y) != 3) set_grid(b, p->x,p->y,0);
         p->x += xd; p->y += yd;
     }
 
-    if (get_grid(b,p->x,p->y) != 2) set_grid(b,p->x,p->y, 1);
+    if (get_grid(b,p->x,p->y) != 3) set_grid(b,p->x,p->y, 5); // joueur courant
     return false;
 }
 
