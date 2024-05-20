@@ -428,7 +428,7 @@ void handle_tchat_serveur (int sock_TCP, partie_t *p){
         for (int i = 0; i < p->nb_joueurs_courant; i++){
             if( p->joueurs[i]->id_equipe == equipe){
 
-                while ((size_t)paquets_envoyes < taille_message){
+                while (paquets_envoyes < taille_message){
                     res_send = send(p->joueurs[i]->sock_client, message + paquets_envoyes, taille_message - paquets_envoyes, 0);
 
                     if (res_send == -1) {

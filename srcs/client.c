@@ -326,7 +326,7 @@ int reception_tchat (int *sock){
     u_int16_t len_recu;
     int octets_recus = 0;
     int recu = 0;
-        while ((size_t)octets_recus < sizeof(len_recu)) {
+        while ((size_t)octets_recus < sizeof(5)) {
             recu = recv(*sock, &len_recu, sizeof(len_recu), 0);
             if (recu < 0){
                 perror("recv len failed");
@@ -335,7 +335,7 @@ int reception_tchat (int *sock){
             octets_recus += recu;
         }
 
-    int taille_message = ((len_recu / 2) + 2) * sizeof(u_int16_t);
+    u_int16_t taille_message = ((len_recu / 2) + 2) * sizeof(u_int16_t);
     u_int16_t *message = malloc(taille_message);
     if (!message) {
         perror("malloc failed");
