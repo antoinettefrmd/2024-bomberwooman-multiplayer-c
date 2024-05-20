@@ -20,6 +20,7 @@ typedef struct joueur {
     int id;
     int id_equipe; 
     struct sockaddr_in6 adresse; // adresse du client quand il se connecte
+    int sock_client;
 } joueur_t;
 
 // Struct partie
@@ -59,13 +60,13 @@ void abonnementMultidiff (u_int16_t portMDIFF, char * adrMdif, int sock_TCP,int 
 u_int16_t header(int codereq, int id, int eq);
 u_int16_t* tchat_format(int codereq, int id, int eq, int len, char * data);
 void messageTchatClient (int sock_TCP, u_int16_t buf[], int tabulation, char data[], int len);
+int reception_tchat (int *sock);
 
 int ncurses(uint16_t *rep_serv, int sock_UDP, int sock_TCP, struct sockaddr_in6 serv_dest);
 
 int client_thread(arg_thread_t *args);
 
-void handle_tchat_serveur (int sock_TCP);
-
+void handle_tchat_serveur (int sock_TCP, partie_t *p);
 int serveur(partie_t *p);
 void create_sockaddr_mdif(partie_t *p, int port_MDIF);
 

@@ -18,10 +18,11 @@
 static int PORT_UDP = 1234;
 int PORT_MDIF = 4321;
 
-int rajoute_joueur_partie(liste_parties_t *lp, int type_4) // rajouter un gros lock sur la fonction
+int rajoute_joueur_partie(liste_parties_t *lp, int type_4, int sock_client) // rajouter un gros lock sur la fonction
 {
     joueur_t *j = malloc(sizeof(joueur_t));    
-
+    j -> sock_client = sock_client;
+    
     liste_parties_t *courante = lp;
 
     if (courante->partie == NULL)
@@ -183,13 +184,13 @@ int client_thread(arg_thread_t *args)
     pthread_mutex_lock(args->verrou);
     if (req[0] == 2) 
     { 
-        rajoute_joueur_partie (p_2v2, 0);
+        rajoute_joueur_partie (p_2v2, 0, sock_client);
         rep_0 |= 10 << 3;
         courante = p_2v2;
     }
     else 
     {
-        rajoute_joueur_partie(p_4_adv, 1);
+        rajoute_joueur_partie(p_4_adv, 1, sock_client);
         rep_0 |= 9 << 3;
         courante = p_4_adv;
     }
@@ -265,7 +266,7 @@ int client_thread(arg_thread_t *args)
         serveur(courante->partie);
     } 
     
-    handle_tchat_serveur(args->socket_client);
+    handle_tchat_serveur(args->socket_client,courante->partie);
 
     //char buf[25];
     uint16_t client_move[2];
@@ -312,7 +313,7 @@ int serveur(partie_t *p) {
     else
     {
         char message2[1024] = {0};
-        sprintf(message2, "La partie peut commencer !");
+        sprintf(message2, "La partie peut commencer !!");
         int envoyes = 0;
         while ((size_t)envoyes < strlen(message2)) {
             ssize_t tailleEnvoie = sendto(p->sock_serv_MDIF, message2 + envoyes, strlen(message2) - envoyes, 0, (struct sockaddr *)&p->adresse_serv_MDIF, sizeof(p->adresse_serv_MDIF));
@@ -330,21 +331,8 @@ int serveur(partie_t *p) {
     return 0;
 }
 
-void handle_tchat_serveur (int sock_TCP){
+void handle_tchat_serveur (int sock_TCP, partie_t *p){
 
-    fd_set rset;
-    FD_ZERO(&rset);
-    FD_SET(sock_TCP, &rset);
-
-    struct timeval timeout;
-    timeout.tv_sec = 1;
-    timeout.tv_usec = 0; 
-
-    int ready = select(sock_TCP + 1, &rset, NULL, 0, &timeout);
-    if (ready < 0) {
-        perror("select error");
-        return;
-    }
     int len_recu;
     int recu = 0;
     int octet_recu = 0;
@@ -368,7 +356,7 @@ void handle_tchat_serveur (int sock_TCP){
     }
     
     int taille_message = ((len_recu / 2) + 2) * sizeof(u_int16_t);
-     printf("taille : %d\n",taille_message);
+    printf("taille : %d\n",taille_message);
     int paquets_recu = 0;
     int res_recv;
     while (paquets_recu < taille_message) {
@@ -386,6 +374,57 @@ void handle_tchat_serveur (int sock_TCP){
     }
 
     printf("Reception tchat %c\n", (char)(message[1] & 0xFF));
+   
+    u_int16_t codereq = message[0] & 0x1FFF;
+   
+   // int codereq = 7;
+    printf("codereq %u\n",codereq);
+
+    if (codereq == 7) { // envoyé à tout le monde
+
+      int paquets_envoyes = 0; 
+      int res_send;
+    
+        for (int i = 0; i < p-> nb_joueurs_courant; i++){
+            while (paquets_envoyes < taille_message){
+                res_send = send(p->joueurs[i]->sock_client, message + paquets_envoyes, taille_message - paquets_envoyes, 0);
+
+                if (res_send == -1) {
+                    perror("Erreur lors de l'envoi du message");
+                    exit(EXIT_FAILURE);
+                }
+                if (res_send == 0) break;
+                paquets_envoyes += res_send;
+            }
+        }    
+    } else { // envoie uniquement à l'équipier
+        int equipe = (ntohs(message[0]) >> 15) & 0x1;
+        printf("equipe %d", equipe);
+        int sock_client = 0;
+
+        int paquets_envoyes = 0; 
+        int res_send;
+
+        for (int i = 0; i < p->nb_joueurs_courant; i++){
+            if( p->joueurs[i]->id_equipe == equipe){
+
+                while (paquets_envoyes < taille_message){
+                    res_send = send(sock_client, message + paquets_envoyes, taille_message - paquets_envoyes, 0);
+
+                    if (res_send == -1) {
+                        perror("Erreur lors de l'envoi du message");
+                        exit(EXIT_FAILURE);
+                    }
+                    if (res_send == 0) break;
+                    paquets_envoyes += res_send;
+
+                }
+            }
+            
+        }
+    
+    }
+    printf("Tchat serveur vers joueurs OK\n");
 
     free(message);
 }
